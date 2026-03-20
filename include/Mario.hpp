@@ -5,12 +5,9 @@
 
 class Mario : public Character {
 public:
-    // 構造函數直接指定圖片
     Mario() : Character(RESOURCE_DIR"/Entities/Player/mario.png") {
-        SetZIndex(50); // 確保在方塊前面
+        SetZIndex(50);
     }
-
-    // 未來 Week 7 的狀態機將在此擴充 (例如 EatMushroom(), TakeDamage())
 };
 
-#endif
+#endif //MARIO_HPP
