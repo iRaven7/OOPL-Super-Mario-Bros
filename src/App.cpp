@@ -58,62 +58,37 @@ void App::LoadLevel(int level) {
 */
 
 void App::Update() {
-    // 計算 Delta Time
+    // 1. 計算 Delta Time
     float deltaTime = static_cast<float>(Util::Time::GetDeltaTimeMs()) / 1000.0f;
-    
-    // 替換為固定值進行測試：
-    //float deltaTime = 1.0f / 60.0f;
 
-
-    //TODO: do your things here and delete this line <3
-
-    // 渲染所有子節點
-    m_Root.Update();
-
-    // 1. 擷取輸入
+    // 2. 擷取輸入
     float inputDirection = 0.0f;
-    if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
-    else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) inputDirection = -1.0f;
-
-    bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
-    bool wantsJump = Util::Input::IsKeyPressed(Util::Keycode::SPACE); // 空白鍵跳躍
-
-    // 2. 更新瑪利歐物理
-    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump);
-
-    // 3. 更新攝影機 (關鍵！)
-    UpdateCamera();
-
-    // 4. 渲染
-    m_Root.Update();
-
-    // 實作快捷鍵以便測試關卡切換 (0 為測試，1-5 為正式關卡)
-    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
-    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_1)) LoadLevel(1);
-
     if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) {
         inputDirection = 1.0f;
     }
     else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) {
         inputDirection = -1.0f;
     }
+    bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
+    bool wantsJump = Util::Input::IsKeyPressed(Util::Keycode::SPACE);
 
-    // 假設 m_Mario 是 Character 類別的實體
+    // 3. 更新物理系統
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump);
 
-#include "Util/Logger.hpp" // 確保有引入
+    // 4. 更新攝影機邏輯
+    UpdateCamera();
 
-    // 在 m_Mario->UpdatePhysics(...) 之後加入這行：
-    LOG_DEBUG("Mario X: {}, Y: {}, Input: {}",
-        m_Mario->GetPosition().x,
-        m_Mario->GetPosition().y,
-        inputDirection);
-    /*
-     * Do not touch the code below as they serve the purpose for
-     * closing the window.
-     */
-    if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
-        Util::Input::IfExit()) {
+    // 5. 渲染所有子節點
+    m_Root.Update();
+
+    // --- 除錯與系統控制區塊 ---
+    LOG_DEBUG("Mario X: {:.2f}, Y: {:.2f}, IsGrounded: {}",
+        m_Mario->GetPosition().x, m_Mario->GetPosition().y, m_Mario->IsGrounded());
+
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_1)) LoadLevel(1);
+
+    if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) || Util::Input::IfExit()) {
         m_CurrentState = State::END;
     }
 }
