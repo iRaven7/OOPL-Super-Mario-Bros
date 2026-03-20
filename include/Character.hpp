@@ -31,8 +31,6 @@ public:
     bool IsGrounded() const { return m_IsGrounded; }
 
     // 物理更新邏輯，需傳入幀時間差 (Delta Time) 以確保不同硬體上的移動距離一致
-   // --- 修改：加入 jump 輸入，並回傳當前速度 (供攝影機判斷) ---
-    glm::vec2 UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump);
 
 
 private:

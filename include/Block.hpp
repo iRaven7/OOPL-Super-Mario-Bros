@@ -20,6 +20,7 @@ public:
         m_Transform.translation = Position;
     }
 
+    [[nodiscard]] const glm::vec2& GetPosition() const { return m_Transform.translation; }
 private:
     std::string m_ImagePath;
 };

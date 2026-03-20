@@ -4,6 +4,7 @@
 #include "pch.hpp" // IWYU pragma: export
 #include "Util/Renderer.hpp"
 #include "MapManager.hpp"
+#include "Mario.hpp"
 
 class App {
 public:

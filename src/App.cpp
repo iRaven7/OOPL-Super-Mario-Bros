@@ -1,19 +1,19 @@
-#include "App.hpp"
+ï»¿#include "App.hpp"
 #include "Mario.hpp"
 
 #include "Util/Image.hpp"
 #include "Util/Input.hpp"
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
-#include "Util/Time.hpp" // °²³] PTSD ¦³´£¨Ñ®É¶¡Àò¨ú
+#include "Util/Time.hpp" // å‡è¨­ PTSD æœ‰æä¾›æ™‚é–“ç²å–
 
 void App::Start() {
     LOG_TRACE("Start");
 
-    // 1. ªì©l¤Æº¿§Q¼Ú
+    // 1. åˆå§‹åŒ–ç‘ªåˆ©æ­
     m_Mario = std::make_shared<Mario>();
-    m_Mario->SetPosition({ 0.0f, 0.0f }); // °_©l¦ì¸m
-    m_Root.AddChild(m_Mario); // ±¾¸ü¨ì´è¬V®Ú¸`ÂI
+    m_Mario->SetPosition({ 0.0f, 0.0f }); // èµ·å§‹ä½ç½®
+    m_Root.AddChild(m_Mario); // æ›è¼‰åˆ°æ¸²æŸ“æ ¹ç¯€é»
 
     LoadLevel(0);
 
@@ -23,13 +23,13 @@ void App::Start() {
 void App::LoadLevel(int level) {
     m_CurrentLevel = level;
 
-    // ²M°£ÂÂªº¦a¹Ï¸`ÂI
+    // æ¸…é™¤èˆŠçš„åœ°åœ–ç¯€é»
     for (auto& block : m_CurrentMapBlocks) {
         m_Root.RemoveChild(block);
     }
     m_CurrentMapBlocks.clear();
 
-    // §PÂ_Åª¨ú¸ô®|
+    // åˆ¤æ–·è®€å–è·¯å¾‘
     std::string mapPath;
     if (level == 0) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
@@ -38,56 +38,59 @@ void App::LoadLevel(int level) {
         mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
     }
 
-    // ­«·s¥Í¦¨¤è¶ô¨Ã±¾¸ü¦Ü Renderer
+    // é‡æ–°ç”Ÿæˆæ–¹å¡Šä¸¦æ›è¼‰è‡³ Renderer
     m_CurrentMapBlocks = m_MapManager.LoadMap(mapPath);
     for (auto& block : m_CurrentMapBlocks) {
         m_Root.AddChild(block);
     }
 
-    LOG_INFO("¤w¸ü¤JÃö¥d: {}", level);
+    LOG_INFO("å·²è¼‰å…¥é—œå¡: {}", level);
 
-    // ­«³]Äá¼v¾÷
-    m_CameraX = 0.0f;
-    m_Root.SetPosition({ 0.0f, 0.0f }); // ­«³]®Ú¸`ÂI¦ì¸m
-
-    // ­«³]º¿§Q¼Ú¦ì¸m (¨Ì¾ÚÃö¥d³]©w)
-    m_Mario->SetPosition({ -300.0f, -150.0f }); // Á{®É¦aªO°ª«×
 }
+    /*
+    // é‡è¨­æ”å½±æ©Ÿ
+    m_CameraX = 0.0f;
+    m_Root.SetPosition({ 0.0f, 0.0f }); // é‡è¨­æ ¹ç¯€é»ä½ç½®
+
+    // é‡è¨­ç‘ªåˆ©æ­ä½ç½® (ä¾æ“šé—œå¡è¨­å®š)
+    m_Mario->SetPosition({ -300.0f, -150.0f }); // è‡¨æ™‚åœ°æ¿é«˜åº¦
+}
+*/
 
 void App::Update() {
-    // ­pºâ Delta Time
-    float deltaTime = static_cast<float>(Util::Time::GetDeltaTime());
+    // è¨ˆç®— Delta Time
+    float deltaTime = static_cast<float>(Util::Time::GetDeltaTimeMs()) / 1000.0f;
+    
+    // æ›¿æ›ç‚ºå›ºå®šå€¼é€²è¡Œæ¸¬è©¦ï¼š
+    //float deltaTime = 1.0f / 60.0f;
+
 
     //TODO: do your things here and delete this line <3
 
-    // ´è¬V©Ò¦³¤l¸`ÂI
+    // æ¸²æŸ“æ‰€æœ‰å­ç¯€é»
     m_Root.Update();
 
-    // 1. Â^¨ú¿é¤J
+    // 1. æ“·å–è¼¸å…¥
     float inputDirection = 0.0f;
     if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
     else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) inputDirection = -1.0f;
 
     bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
-    bool wantsJump = Util::Input::IsKeyPressed(Util::Keycode::SPACE); // ªÅ¥ÕÁä¸õÅD
+    bool wantsJump = Util::Input::IsKeyPressed(Util::Keycode::SPACE); // ç©ºç™½éµè·³èº
 
-    // 2. §ó·sº¿§Q¼Úª«²z
+    // 2. æ›´æ–°ç‘ªåˆ©æ­ç‰©ç†
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump);
 
-    // 3. §ó·sÄá¼v¾÷ (ÃöÁä¡I)
+    // 3. æ›´æ–°æ”å½±æ©Ÿ (é—œéµï¼)
     UpdateCamera();
 
-    // 4. ´è¬V
+    // 4. æ¸²æŸ“
     m_Root.Update();
 
-    // ¹ê§@§Ö±¶Áä¥H«K´ú¸ÕÃö¥d¤Á´« (0 ¬°´ú¸Õ¡A1-5 ¬°¥¿¦¡Ãö¥d)
+    // å¯¦ä½œå¿«æ·éµä»¥ä¾¿æ¸¬è©¦é—œå¡åˆ‡æ› (0 ç‚ºæ¸¬è©¦ï¼Œ1-5 ç‚ºæ­£å¼é—œå¡)
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_1)) LoadLevel(1);
 
-
-    float deltaTime = 1.0f / 60.0f; // ­Y PTSD ®Ø¬[¥¼´£¨Ñ®É¶¡Àò¨ú¨ç¼Æ¡A¼È¥H©T©w 60 FPS ­pºâ
-
-    float inputDirection = 0.0f;
     if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) {
         inputDirection = 1.0f;
     }
@@ -95,11 +98,16 @@ void App::Update() {
         inputDirection = -1.0f;
     }
 
-    // °²³] Z Áä¬°½Ä¨ë
-    bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
+    // å‡è¨­ m_Mario æ˜¯ Character é¡åˆ¥çš„å¯¦é«”
+    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump);
 
-    // °²³] m_Mario ¬O Character Ãş§Oªº¹êÅé
-    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting);
+#include "Util/Logger.hpp" // ç¢ºä¿æœ‰å¼•å…¥
+
+    // åœ¨ m_Mario->UpdatePhysics(...) ä¹‹å¾ŒåŠ å…¥é€™è¡Œï¼š
+    LOG_DEBUG("Mario X: {}, Y: {}, Input: {}",
+        m_Mario->GetPosition().x,
+        m_Mario->GetPosition().y,
+        inputDirection);
     /*
      * Do not touch the code below as they serve the purpose for
      * closing the window.
@@ -109,34 +117,70 @@ void App::Update() {
         m_CurrentState = State::END;
     }
 }
-
+/*
 void App::UpdateCamera() {
-    // º¿§Q¼Ú¦b¥@¬É®y¼Ğ¤¤ªº X
+    // ç‘ªåˆ©æ­åœ¨ä¸–ç•Œåº§æ¨™ä¸­çš„ X
     float marioWorldX = m_Mario->GetPosition().x;
 
-    // Ä²µoÄá¼v¾÷?°ÊªºìH­È (¿Ã¹õ¤¤¤ßªº¥@¬É®y¼Ğ)
+    // è§¸ç™¼æ”å½±æ©Ÿæ»šå‹•çš„é–¾å€¼ (è¢å¹•ä¸­å¿ƒçš„ä¸–ç•Œåº§æ¨™)
     float triggerX = m_CameraX + (SCREEN_WIDTH * CAMERA_DEADZONE_RATIO);
 
-    // ­ìª©º¿§Q¼Ú¾÷¨î¡G¥u¦³¦V¥k¶W¹L¤¤½u®ÉÄá¼v¾÷¤~«e¶i
+    // åŸç‰ˆç‘ªåˆ©æ­æ©Ÿåˆ¶ï¼šåªæœ‰å‘å³è¶…éä¸­ç·šæ™‚æ”å½±æ©Ÿæ‰å‰é€²
     if (marioWorldX > triggerX) {
         m_CameraX = marioWorldX - (SCREEN_WIDTH * CAMERA_DEADZONE_RATIO);
     }
 
-    // ±N´è¬V®Ú¸`ÂI¦V¥ª²¾°Ê CameraX ªº¶ZÂ÷¡A¼ÒÀÀÄá¼v¾÷¥k²¾
+    // å°‡æ¸²æŸ“æ ¹ç¯€é»å‘å·¦ç§»å‹• CameraX çš„è·é›¢ï¼Œæ¨¡æ“¬æ”å½±æ©Ÿå³ç§»
     m_Root.SetPosition({ -m_CameraX, 0.0f });
 
-    // ­­¨îº¿§Q¼Ú¤£¯à¦^¨ì¿Ã¹õ¥ªÃä¬É (³o¤£ºâª«²z¸I¼²¡A¬OÃèÀY­­¨î)
-    float leftBoundary = m_CameraX - (SCREEN_WIDTH * 0.5f); // °²³]­ìÂI¦b¿Ã¹õ¤¤¤ß
-    // µù¡G¤W¤èªº Screen ®y¼Ğ¨t°²³]¥i¯à»İ­n½Õ¾ã¡A¨ú¨M©ó PTSD ªº Viewport ³]©w¡C
-    // ¦pªG­ìÂI¦b¿Ã¹õ¥ª¤U¨¤¡AleftBoundary = m_CameraX;
+    // é™åˆ¶ç‘ªåˆ©æ­ä¸èƒ½å›åˆ°è¢å¹•å·¦é‚Šç•Œ (é€™ä¸ç®—ç‰©ç†ç¢°æ’ï¼Œæ˜¯é¡é ­é™åˆ¶)
+    float leftBoundary = m_CameraX - (SCREEN_WIDTH * 0.5f); // å‡è¨­åŸé»åœ¨è¢å¹•ä¸­å¿ƒ
+    // è¨»ï¼šä¸Šæ–¹çš„ Screen åº§æ¨™ç³»å‡è¨­å¯èƒ½éœ€è¦èª¿æ•´ï¼Œå–æ±ºæ–¼ PTSD çš„ Viewport è¨­å®šã€‚
+    // å¦‚æœåŸé»åœ¨è¢å¹•å·¦ä¸‹è§’ï¼ŒleftBoundary = m_CameraX;
 
-    // ³o¸Ì§Ú­Ì°²³] PTSD ­ìÂI¦b¿Ã¹õ¤¤¤ß¡A¿Ã¹õ½d³ò¬O -400 ¨ì 400
+    // é€™è£¡æˆ‘å€‘å‡è¨­ PTSD åŸé»åœ¨è¢å¹•ä¸­å¿ƒï¼Œè¢å¹•ç¯„åœæ˜¯ -400 åˆ° 400
     leftBoundary = m_CameraX - 400.0f;
 
-    if (m_Mario->GetPosition().x < leftBoundary + 25.0f) { // 25 ¬°º¿§Q¼Ú¥b¼e
+    if (m_Mario->GetPosition().x < leftBoundary + 25.0f) { // 25 ç‚ºç‘ªåˆ©æ­åŠå¯¬
         m_Mario->SetPosition({ leftBoundary + 25.0f, m_Mario->GetPosition().y });
     }
 }
+*/
+
+void App::UpdateCamera() {
+    // å–å¾—ç‘ªåˆ©æ­ç›®å‰çš„ X åº§æ¨™
+    float marioX = m_Mario->GetPosition().x;
+
+    // å®šç¾©è¢å¹•ä¸­ç·šä½œç‚ºæ”å½±æ©Ÿé–‹å§‹æ»¾å‹•çš„è§¸ç™¼é»
+    // å‡è¨­åŸé» (0,0) åœ¨è¢å¹•æ­£ä¸­å¤®ï¼Œè¢å¹•å¯¬åº¦ç‚º 800ï¼Œä¸­ç·šå¤§ç´„æ˜¯ 0.0f
+    float triggerX = 0.0f;
+
+    if (marioX > triggerX) {
+        // è¨ˆç®—ç‘ªåˆ©æ­è¶…å‡ºè§¸ç™¼é»çš„è·é›¢
+        float deltaX = marioX - triggerX;
+
+        // ç´¯åŠ è‡³ç¸½æ”å½±æ©Ÿä½ç§»é‡ (è‹¥å¾ŒçºŒéœ€è¦è¨ˆç®—çµ•å°ä¸–ç•Œåº§æ¨™æ™‚æœƒç”¨åˆ°)
+        m_CameraX += deltaX;
+
+        // 1. å°‡ç‘ªåˆ©æ­çš„è¢å¹• X åº§æ¨™å›ºå®šåœ¨è§¸ç™¼é»ä¸Š
+        m_Mario->SetPosition({ triggerX, m_Mario->GetPosition().y });
+
+        // 2. å°‡æ‰€æœ‰åœ°åœ–æ–¹å¡Šå‘å·¦å¹³ç§» deltaX
+        for (auto& block : m_CurrentMapBlocks) {
+            glm::vec2 pos = block->GetPosition();
+            pos.x -= deltaX;
+            block->SetPosition(pos);
+        }
+    }
+
+    // è™•ç†å·¦é‚Šç•Œé™åˆ¶ (ç‘ªåˆ©æ­ç„¡æ³•å‘å·¦èµ°å‡ºè¢å¹•)
+    // å‡è¨­è¢å¹•å·¦é‚Šç·£ç‚º -400.0fï¼Œç‘ªåˆ©æ­çš„åŠå¯¬ç´„ç‚º 25.0f
+    float leftScreenBoundary = -400.0f + 25.0f;
+    if (m_Mario->GetPosition().x < leftScreenBoundary) {
+        m_Mario->SetPosition({ leftScreenBoundary, m_Mario->GetPosition().y });
+    }
+}
+
 
 void App::End() { // NOLINT(this method will mutate members in the future)
     LOG_TRACE("End");
