@@ -38,7 +38,7 @@ void App::LoadLevel(int level) {
 
     // 重設攝影機與角色起始位置
     m_CameraX = 0.0f;
-    m_Mario->SetPosition({ -300.0f, 0.0f });
+    m_Mario->SetPosition({ -300.0f, 1000.0f });
 
     LOG_INFO("已載入關卡: {}", level);
 }
@@ -59,8 +59,11 @@ void App::Update() {
     bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
     bool wantsJump = Util::Input::IsKeyPressed(Util::Keycode::SPACE);
 
-    // 3. 更新物理系統
-    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump);
+    // ==========================================
+    // 3. 更新物理系統 (修改這行！)
+    // 傳入 m_CurrentMapBlocks 讓瑪利歐進行 AABB 碰撞偵測
+    // ==========================================
+    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
 
     // 4. 更新攝影機與地圖位置
     UpdateCamera();

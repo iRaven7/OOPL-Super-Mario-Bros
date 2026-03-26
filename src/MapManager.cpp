@@ -1,6 +1,7 @@
 #include "MapManager.hpp"
 #include <fstream>
 #include "Util/Logger.hpp"
+#include "BreakableBlock.hpp"
 
 std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& filePath) {
     std::vector<std::shared_ptr<Block>> blocks;
@@ -26,8 +27,14 @@ std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& fileP
             if (tileType == '1') {
                 auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png");
                 block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
-                block->SetZIndex(10); // 確保在背景之上
+                block->SetZIndex(10);
                 blocks.push_back(block);
+            }
+            else if (tileType == '3') {
+                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");
+                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetZIndex(10);
+                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
             }
             // 未來可擴充其他代碼，例如 '2' 為水管，'3' 為問號方塊
         }

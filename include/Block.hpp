@@ -11,6 +11,8 @@ public:
         SetImage(imagePath);
     }
 
+    virtual ~Block() = default; // 確保多型資源正確釋放
+
     void SetImage(const std::string& imagePath) {
         m_ImagePath = imagePath;
         m_Drawable = std::make_shared<Util::Image>(m_ImagePath);
@@ -20,9 +22,20 @@ public:
         m_Transform.translation = Position;
     }
 
-    [[nodiscard]] const glm::vec2& GetPosition() const { return m_Transform.translation; }
+    [[nodiscard]] glm::vec2 GetPosition() const {
+        return m_Transform.translation;
+    }
+
+    [[nodiscard]] glm::vec2 GetSize() const {
+        return { 16.0f, 16.0f };
+    }
+
+    // 新增：多型介面
+    virtual void OnHit() {} // 預設一般方塊被撞擊無反應
+    virtual bool IsActive() const { return true; } // 預設一般方塊永遠具備實體
+
 private:
     std::string m_ImagePath;
 };
 
-#endif
+#endif // BLOCK_HPP
