@@ -8,6 +8,10 @@ class BreakableBlock : public Block {
 public:
     explicit BreakableBlock(const std::string& imagePath) : Block(imagePath) {}
 
+    bool IsActive() const override {
+        return m_IsActive;
+    }
+
     glm::vec2 GetCollisionPosition() const override {
         return { m_Transform.translation.x, m_OriginalY };
     }
