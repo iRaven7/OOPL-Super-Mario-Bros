@@ -19,6 +19,10 @@ public:
 
     virtual void Update(float deltaTime) {}  // 供子類別實作動畫
 
+    virtual glm::vec2 GetCollisionPosition() const {
+        return m_Transform.translation;
+    }
+
     void SetImage(const std::string& imagePath) {
         m_ImagePath = imagePath;
         m_Drawable = std::make_shared<Util::Image>(m_ImagePath);

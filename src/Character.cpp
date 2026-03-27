@@ -40,23 +40,25 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         m_IsGrounded = false;
     }
 
-    if (!m_IsGrounded) {
-        m_Velocity.y += GRAVITY * deltaTime;
-        m_Velocity.y = std::max(m_Velocity.y, MAX_FALL_SPEED);
-    }
+    // 移除 if (!m_IsGrounded) 的條件判斷，使重力成為全域常態作用力
+    m_Velocity.y += GRAVITY * deltaTime;
+    m_Velocity.y = std::max(m_Velocity.y, MAX_FALL_SPEED);
 
     glm::vec2 currentPos = GetPosition();
     glm::vec2 mySize = GetSize();
 
-    // 2. X 軸獨立移動與碰撞解析 (這裡使用了 blocks 參數)
+    // 2. X 軸獨立移動與碰撞解析
     currentPos.x += m_Velocity.x * deltaTime;
     for (const auto& block : blocks) {
-        if (CheckAABB(currentPos, mySize, block->GetPosition(), block->GetSize())) {
-            if (m_Velocity.x > 0.0f) { // 向右撞擊
-                currentPos.x = block->GetPosition().x - (block->GetSize().x / 2.0f) - (mySize.x / 2.0f);
+        if (!block->IsActive()) continue; // 略過邏輯上已失效的物件
+
+        // 統一改用 GetCollisionPosition() 避免動畫期間的偏移干擾
+        if (CheckAABB(currentPos, mySize, block->GetCollisionPosition(), block->GetSize())) {
+            if (m_Velocity.x > 0.0f) {
+                currentPos.x = block->GetCollisionPosition().x - (block->GetSize().x / 2.0f) - (mySize.x / 2.0f);
             }
-            else if (m_Velocity.x < 0.0f) { // 向左撞擊
-                currentPos.x = block->GetPosition().x + (block->GetSize().x / 2.0f) + (mySize.x / 2.0f);
+            else if (m_Velocity.x < 0.0f) {
+                currentPos.x = block->GetCollisionPosition().x + (block->GetSize().x / 2.0f) + (mySize.x / 2.0f);
             }
             m_Velocity.x = 0.0f;
         }
@@ -64,16 +66,18 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
 
     // 3. Y 軸獨立移動與碰撞解析
     currentPos.y += m_Velocity.y * deltaTime;
-    m_IsGrounded = false; // 每幀重置接地狀態
+    m_IsGrounded = false;
 
     for (const auto& block : blocks) {
-        if (CheckAABB(currentPos, mySize, block->GetPosition(), block->GetSize())) {
-            if (m_Velocity.y < 0.0f) { // 向下掉落接觸方塊 (踩到地板)
-                currentPos.y = block->GetPosition().y + (block->GetSize().y / 2.0f) + (mySize.y / 2.0f);
+        if (!block->IsActive()) continue; // 略過邏輯上已失效的物件
+
+        if (CheckAABB(currentPos, mySize, block->GetCollisionPosition(), block->GetSize())) {
+            if (m_Velocity.y < 0.0f) {
+                currentPos.y = block->GetCollisionPosition().y + (block->GetSize().y / 2.0f) + (mySize.y / 2.0f);
                 m_IsGrounded = true;
             }
-            else if (m_Velocity.y > 0.0f) { // 向上跳躍接觸方塊 (頂磚塊)
-                currentPos.y = block->GetPosition().y - (block->GetSize().y / 2.0f) - (mySize.y / 2.0f);
+            else if (m_Velocity.y > 0.0f) {
+                currentPos.y = block->GetCollisionPosition().y - (block->GetSize().y / 2.0f) - (mySize.y / 2.0f);
                 block->OnHit(this);
             }
             m_Velocity.y = 0.0f;
