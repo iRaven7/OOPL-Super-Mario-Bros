@@ -34,7 +34,7 @@ public:
             if (!m_IsBouncing) {
                 m_IsBouncing = true;
                 // 提高初始向上速度（從 150.0f 提升至 250.0f）
-                m_BounceVelocity = 250.0f;
+                m_BounceVelocity = 180.0f;
             }
         }
     }
@@ -43,7 +43,7 @@ public:
         if (!m_IsBouncing) return;
 
         // 加大專用重力（從 600.0f 提升至 1500.0f）
-        m_BounceVelocity -= 1500.0f * deltaTime;
+        m_BounceVelocity -= 2500.0f * deltaTime;
         glm::vec2 currentPos = GetPosition();
         currentPos.y += m_BounceVelocity * deltaTime;
 
