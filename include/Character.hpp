@@ -32,6 +32,7 @@ public:
     void SetImage(const std::string& ImagePath);
     void SetPosition(const glm::vec2& Position) { m_Transform.translation = Position; }
     void SetGrounded(bool grounded) { m_IsGrounded = grounded; }
+    virtual bool CanBreakBlocks() const { return false; }
 
 private:
     // AABB ¸I¼²´X¦ó´ú¸Õ

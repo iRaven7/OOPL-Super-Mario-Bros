@@ -30,6 +30,18 @@ std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& fileP
                 block->SetZIndex(10);
                 blocks.push_back(block);
             }
+            else if (tileType == '0') {
+                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/sky.png");
+                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetZIndex(10);
+                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
+            }
+            else if (tileType == '2') {
+                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/question_block.png");
+                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetZIndex(10);
+                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
+            }
             else if (tileType == '3') {
                 auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");
                 block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });

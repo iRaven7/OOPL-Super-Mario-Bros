@@ -5,6 +5,8 @@
 #include "Util/Image.hpp"
 #include <string>
 
+class Character;
+
 class Block : public Util::GameObject {
 public:
     explicit Block(const std::string& imagePath) {
@@ -12,6 +14,10 @@ public:
     }
 
     virtual ~Block() = default; // 確保多型資源正確釋放
+
+    virtual void OnHit(Character* hitter) {} // 傳入撞擊者
+
+    virtual void Update(float deltaTime) {}  // 供子類別實作動畫
 
     void SetImage(const std::string& imagePath) {
         m_ImagePath = imagePath;

@@ -74,6 +74,7 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
             }
             else if (m_Velocity.y > 0.0f) { // 向上跳躍接觸方塊 (頂磚塊)
                 currentPos.y = block->GetPosition().y - (block->GetSize().y / 2.0f) - (mySize.y / 2.0f);
+                block->OnHit(this);
             }
             m_Velocity.y = 0.0f;
         }
