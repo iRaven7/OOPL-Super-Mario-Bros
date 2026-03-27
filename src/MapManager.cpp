@@ -23,21 +23,19 @@ std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& fileP
         for (size_t col = 0; col < line.length(); ++col) {
             char tileType = line[col];
 
+
+            if (tileType == '0') {
+                continue; // 遇到 0 直接跳過，不產生任何物件
+            }
             // 基礎判斷邏輯，1 對應地板
-            if (tileType == '1') {
+            else if (tileType == '1') {
                 auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png");
                 block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
                 block->SetZIndex(10);
                 blocks.push_back(block);
             }
-            else if (tileType == '0') {
-                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/sky.png");
-                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
-                block->SetZIndex(10);
-                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
-            }
             else if (tileType == '2') {
-                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/question_block.png");
+                auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/question_block.png");
                 block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
                 block->SetZIndex(10);
                 blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存

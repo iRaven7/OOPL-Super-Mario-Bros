@@ -46,9 +46,9 @@ private:
     glm::vec2 m_Velocity = { 0.0f, 0.0f };
     bool m_IsGrounded = false;
 
-    static constexpr float GRAVITY = -2400.0f;
-    static constexpr float MAX_FALL_SPEED = -900.0f;
-    static constexpr float JUMP_FORCE = 850.0f;
+    static constexpr float GRAVITY = -900.0f;
+    static constexpr float MAX_FALL_SPEED = -600.0f;
+    static constexpr float JUMP_FORCE = 400.0f;
 
     static constexpr float WALK_ACCEL = 800.0f;
     static constexpr float SPRINT_ACCEL = 1200.0f;

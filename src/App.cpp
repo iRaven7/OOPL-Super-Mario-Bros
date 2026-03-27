@@ -12,7 +12,7 @@ void App::Start() {
 
     LoadLevel(0);
 
-    m_Mario->SetMarioState(MarioState::BIG);
+    //m_Mario->SetMarioState(MarioState::BIG);
     m_CurrentState = State::UPDATE;
 }
 
@@ -39,7 +39,7 @@ void App::LoadLevel(int level) {
 
     // 重設攝影機與角色起始位置
     m_CameraX = 0.0f;
-    m_Mario->SetPosition({ -300.0f, 10000.0f });
+    m_Mario->SetPosition({ -300.0f, 2000.0f });
 
     LOG_INFO("已載入關卡: {}", level);
 }
