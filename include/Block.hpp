@@ -6,6 +6,7 @@
 #include <string>
 
 class Character;
+class Item;
 
 class Block : public Util::GameObject {
 public:
@@ -21,6 +22,10 @@ public:
 
     virtual glm::vec2 GetCollisionPosition() const {
         return m_Transform.translation;
+    }
+
+    virtual std::shared_ptr<Item> PopSpawnedItem() {
+        return nullptr;
     }
 
     void SetImage(const std::string& imagePath) {

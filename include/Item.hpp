@@ -3,25 +3,30 @@
 
 #include "Util/GameObject.hpp"
 #include "Util/Image.hpp"
+#include "Block.hpp"
+#include "Mario.hpp" // 需要知道瑪利歐以觸發變身
+#include <vector>
+#include <memory>
 
 class Item : public Util::GameObject {
 public:
     explicit Item(const std::string& imagePath) {
         m_ImagePath = imagePath;
         m_Drawable = std::make_shared<Util::Image>(m_ImagePath);
-        SetZIndex(40); // 確保層級在背景之上，通常在方塊後方或前方
     }
 
     virtual void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) = 0;
-    virtual void OnCollect() = 0; // 被瑪利歐碰到時觸發
+    virtual void OnCollect(Mario* mario) = 0;
 
-    void SetPosition(const glm::vec2& Position) { m_Transform.translation = Position; }
+    bool IsActive() const { return m_IsActive; }
     glm::vec2 GetPosition() const { return m_Transform.translation; }
-    glm::vec2 GetSize() const { return { 16.0f, 16.0f }; } // 預設尺寸
+    void SetPosition(const glm::vec2& Position) { m_Transform.translation = Position; }
+    glm::vec2 GetSize() const { return { 16.0f, 16.0f }; }
 
 protected:
     std::string m_ImagePath;
     glm::vec2 m_Velocity = { 0.0f, 0.0f };
     bool m_IsActive = true;
 };
-#endif
+
+#endif // ITEM_HPP

@@ -12,7 +12,7 @@ void App::Start() {
 
     LoadLevel(0);
 
-    m_Mario->SetMarioState(MarioState::BIG);
+    //m_Mario->SetMarioState(MarioState::BIG);
     m_CurrentState = State::UPDATE;
 }
 
@@ -41,6 +41,8 @@ void App::LoadLevel(int level) {
     m_CameraX = 0.0f;
     m_Mario->SetPosition({ -300.0f, 1500.0f });
 
+    for (auto& item : m_Items) { m_Root.RemoveChild(item); }
+    m_Items.clear();
     LOG_INFO("已載入關卡: {}", level);
 }
 
@@ -69,8 +71,40 @@ void App::Update() {
     // 4. 更新攝影機與地圖位置
     UpdateCamera();
 
+    // 1. 更新方塊，並提取新生成的道具
     for (auto& block : m_CurrentMapBlocks) {
         block->Update(deltaTime);
+        if (auto newItem = block->PopSpawnedItem()) {
+            m_Items.push_back(newItem);
+            m_Root.AddChild(newItem);
+        }
+    }
+
+    // 2. 更新道具，並處理與瑪利歐的碰撞與生命週期
+    for (auto it = m_Items.begin(); it != m_Items.end(); ) {
+        auto& item = *it;
+        if (item->IsActive()) {
+            item->Update(deltaTime, m_CurrentMapBlocks);
+
+            // 簡易的 AABB 檢查瑪利歐是否吃到道具
+            glm::vec2 marioPos = m_Mario->GetPosition();
+            glm::vec2 marioSize = m_Mario->GetSize();
+            glm::vec2 itemPos = item->GetPosition();
+            glm::vec2 itemSize = item->GetSize();
+
+            bool isColliding = std::abs(marioPos.x - itemPos.x) < (marioSize.x + itemSize.x) / 2.0f &&
+                std::abs(marioPos.y - itemPos.y) < (marioSize.y + itemSize.y) / 2.0f;
+
+            if (isColliding) {
+                item->OnCollect(m_Mario.get());
+            }
+            ++it;
+        }
+        else {
+            // 道具失效 (被吃掉)，將其從渲染樹與邏輯陣列中移除
+            m_Root.RemoveChild(item);
+            it = m_Items.erase(it);
+        }
     }
 
     // 5. 渲染

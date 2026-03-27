@@ -2,6 +2,7 @@
 #include <fstream>
 #include "Util/Logger.hpp"
 #include "BreakableBlock.hpp"
+#include "QuestionBlock.hpp"
 
 std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& filePath) {
     std::vector<std::shared_ptr<Block>> blocks;
@@ -35,10 +36,11 @@ std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& fileP
                 blocks.push_back(block);
             }
             else if (tileType == '2') {
-                auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/question_block.png");
+                // 實例化為問號方塊，設定生成 MUSHROOM
+                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM);
                 block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
                 block->SetZIndex(10);
-                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
+                blocks.push_back(block);
             }
             else if (tileType == '3') {
                 auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");

@@ -5,6 +5,7 @@
 #include "Util/Renderer.hpp"
 #include "MapManager.hpp"
 #include "Mario.hpp"
+#include "Item.hpp"
 
 class App {
 public:
@@ -28,7 +29,7 @@ private:
     Util::Renderer m_Root;
     MapManager m_MapManager;
     std::vector<std::shared_ptr<Block>> m_CurrentMapBlocks;
-
+    std::vector<std::shared_ptr<Item>> m_Items;
     std::shared_ptr<Mario> m_Mario;
 
     int m_CurrentLevel = 0;
