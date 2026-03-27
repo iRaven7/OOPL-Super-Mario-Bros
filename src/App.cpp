@@ -84,24 +84,29 @@ void App::Update() {
     for (auto it = m_Items.begin(); it != m_Items.end(); ) {
         auto& item = *it;
         if (item->IsActive()) {
-            item->Update(deltaTime, m_CurrentMapBlocks);
+            item->Update(deltaTime, m_CurrentMapBlocks); // 香菇只在此時與方塊做物理碰撞
 
-            // 簡易的 AABB 檢查瑪利歐是否吃到道具
+            // --- 簡易的 AABB 檢查瑪利歐是否吃到道具 (此處僅作邏輯判斷，不做物理修正) ---
             glm::vec2 marioPos = m_Mario->GetPosition();
             glm::vec2 marioSize = m_Mario->GetSize();
             glm::vec2 itemPos = item->GetPosition();
             glm::vec2 itemSize = item->GetSize();
 
+            // 這裡使用的是嚴格小於，確保貼合時不觸發
             bool isColliding = std::abs(marioPos.x - itemPos.x) < (marioSize.x + itemSize.x) / 2.0f &&
                 std::abs(marioPos.y - itemPos.y) < (marioSize.y + itemSize.y) / 2.0f;
 
             if (isColliding) {
+                // 只要重疊，就立即觸發收集
                 item->OnCollect(m_Mario.get());
+                // 注意： OnCollect 應該要將 item 的 m_IsActive 設為 false
             }
+            // -------------------------------------------------------------------------
+
             ++it;
         }
         else {
-            // 道具失效 (被吃掉)，將其從渲染樹與邏輯陣列中移除
+            // 道具失效 (被吃掉或掉出視窗)，將其移除
             m_Root.RemoveChild(item);
             it = m_Items.erase(it);
         }
@@ -133,10 +138,18 @@ void App::UpdateCamera() {
 
         m_Mario->SetPosition({ triggerX, m_Mario->GetPosition().y });
 
+        // 1. 平移所有地形方塊
         for (auto& block : m_CurrentMapBlocks) {
             glm::vec2 pos = block->GetPosition();
             pos.x -= deltaX;
             block->SetPosition(pos);
+        }
+
+        // 2. 新增：同步平移所有道具，抵銷攝影機造成的相對位移
+        for (auto& item : m_Items) {
+            glm::vec2 pos = item->GetPosition();
+            pos.x -= deltaX;
+            item->SetPosition(pos);
         }
     }
 
