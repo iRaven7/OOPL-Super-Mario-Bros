@@ -24,6 +24,8 @@ public:
     void OnHit(Character* hitter) override {
         if (!m_IsActive) return;
 
+        m_JustHit = true; // 標記此方塊在此影格被撞擊
+
         if (hitter->CanBreakBlocks()) {
             // 大型瑪利歐：直接破壞
             m_IsActive = false;

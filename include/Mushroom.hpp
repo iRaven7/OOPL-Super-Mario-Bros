@@ -62,7 +62,8 @@ public:
     void OnCollect(Mario* mario) override {
         m_IsActive = false;
         m_Visible = false;
-        mario->SetMarioState(MarioState::BIG); // 觸發瑪利歐變大
+        // 吃到蘑菇切換為大型態
+        mario->ChangeState(std::make_unique<BigMarioState>());
     }
 
 private:

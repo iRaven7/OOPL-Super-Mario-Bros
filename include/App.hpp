@@ -6,6 +6,7 @@
 #include "MapManager.hpp"
 #include "Mario.hpp"
 #include "Item.hpp"
+#include "CollisionManager.hpp"
 
 class App {
 public:
@@ -28,6 +29,7 @@ private:
 
     Util::Renderer m_Root;
     MapManager m_MapManager;
+    CollisionManager m_CollisionManager; // 新增管理器
     std::vector<std::shared_ptr<Block>> m_CurrentMapBlocks;
     std::vector<std::shared_ptr<Item>> m_Items;
     std::shared_ptr<Mario> m_Mario;
