@@ -49,11 +49,15 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
 
     // 2. X 軸獨立移動與碰撞解析
     currentPos.x += m_Velocity.x * deltaTime;
-    for (const auto& block : blocks) {
-        if (!block->IsActive()) continue; // 略過邏輯上已失效的物件
 
-        // 統一改用 GetCollisionPosition() 避免動畫期間的偏移干擾
-        if (CheckAABB(currentPos, mySize, block->GetCollisionPosition(), block->GetSize())) {
+    // [新增] X 軸判定專用 Hitbox：高度微調縮小 0.2f，忽略腳底的平地接縫
+    glm::vec2 xHitboxSize = { mySize.x, mySize.y - 0.2f };
+
+    for (const auto& block : blocks) {
+        if (!block->IsActive()) continue;
+
+        // 注意：這裡改用 xHitboxSize 進行檢查
+        if (CheckAABB(currentPos, xHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
             if (m_Velocity.x > 0.0f) {
                 currentPos.x = block->GetCollisionPosition().x - (block->GetSize().x / 2.0f) - (mySize.x / 2.0f);
             }
@@ -68,10 +72,14 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
     currentPos.y += m_Velocity.y * deltaTime;
     m_IsGrounded = false;
 
-    for (const auto& block : blocks) {
-        if (!block->IsActive()) continue; // 略過邏輯上已失效的物件
+    // [新增] Y 軸判定專用 Hitbox：寬度微調縮小 0.2f，避免貼牆下墜時被牆壁接縫卡住
+    glm::vec2 yHitboxSize = { mySize.x - 0.2f, mySize.y };
 
-        if (CheckAABB(currentPos, mySize, block->GetCollisionPosition(), block->GetSize())) {
+    for (const auto& block : blocks) {
+        if (!block->IsActive()) continue;
+
+        // 注意：這裡改用 yHitboxSize 進行檢查
+        if (CheckAABB(currentPos, yHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
             if (m_Velocity.y < 0.0f) {
                 currentPos.y = block->GetCollisionPosition().y + (block->GetSize().y / 2.0f) + (mySize.y / 2.0f);
                 m_IsGrounded = true;

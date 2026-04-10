@@ -11,11 +11,14 @@ public:
 
     QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
 
+    // 在 QuestionBlock 類別中修改此段：
     glm::vec2 GetCollisionPosition() const override {
-        return { m_Transform.translation.x, m_OriginalY };
+        // 修正：必須使用絕對的 m_WorldPosition.x
+        return { m_WorldPosition.x, m_OriginalY };
     }
 
-    void SetPosition(const glm::vec2& Position) {
+    // 同樣確認 SetPosition 有加上 override
+    void SetPosition(const glm::vec2& Position) override {
         Block::SetPosition(Position);
         if (!m_IsBouncing) m_OriginalY = Position.y;
     }

@@ -7,6 +7,7 @@
 #include "Mario.hpp"
 #include "Item.hpp"
 #include "CollisionManager.hpp"
+#include "Enemy.hpp"
 
 class App {
 public:
@@ -32,6 +33,7 @@ private:
     CollisionManager m_CollisionManager; // 新增管理器
     std::vector<std::shared_ptr<Block>> m_CurrentMapBlocks;
     std::vector<std::shared_ptr<Item>> m_Items;
+    std::vector<std::shared_ptr<Enemy>> m_Enemies;
     std::shared_ptr<Mario> m_Mario;
 
     int m_CurrentLevel = 0;

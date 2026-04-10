@@ -22,6 +22,9 @@ public:
     [[nodiscard]] bool GetVisibility() const { return m_Visible; }
     [[nodiscard]] bool IsGrounded() const { return m_IsGrounded; }
 
+    glm::vec2 GetVelocity() const { return m_Velocity;}
+    
+
     // 設為 virtual，供後續大型瑪利歐覆寫碰撞邊界
     [[nodiscard]] virtual glm::vec2 GetSize() const {
         return { 16.0f, 16.0f };
@@ -29,6 +32,7 @@ public:
 
     void SetImage(const std::string& ImagePath);
     void SetGrounded(bool grounded) { m_IsGrounded = grounded; }
+    void SetVelocity(glm::vec2 v) { m_Velocity = v;}
     virtual bool CanBreakBlocks() const { return false; }
 
     // ==========================================
@@ -44,7 +48,14 @@ public:
     }
 
     void UpdateRenderPosition(float cameraX) {
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y };
+        // 若碰撞框高度大於基本圖片高度 (16.0f)，計算需要下移的視覺偏移量
+        float yVisualOffset = 0.0f;
+        if (GetSize().y > 16.0f) {
+            yVisualOffset = (GetSize().y - 16.0f) / 2.0f;
+        }
+
+        // 渲染時，扣除攝影機 X 偏移，並將 Y 座標下移以對齊腳底
+        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y - yVisualOffset };
     }
 
 protected:

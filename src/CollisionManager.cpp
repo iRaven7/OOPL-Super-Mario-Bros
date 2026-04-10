@@ -45,4 +45,32 @@ void CollisionManager::ProcessInteractions(Mario* mario, const std::vector<std::
             }
         }
     }
+
+    // 3. 處理瑪利歐與敵人的戰鬥碰撞
+    for (auto& enemy : enemies) {
+        if (!enemy->IsActive()) continue;
+
+        glm::vec2 enemyPos = enemy->GetCollisionPosition();
+        glm::vec2 enemySize = enemy->GetSize();
+
+        if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
+            // 判定是否為踩踏：瑪利歐的底部大約高於敵人的中心點，且具備向下的速度
+            float marioBottom = marioPos.y - (marioSize.y / 2.0f);
+            float enemyCenterY = enemyPos.y;
+
+            // 存取瑪利歐的速度 (需在 Character.hpp 中新增 GetVelocity() 介面)
+            // 若尚無 GetVelocity()，可暫時僅以位置判斷：marioBottom > enemyCenterY + 4.0f
+            if (marioBottom > enemyCenterY && mario->GetVelocity().y < 0.0f) {
+                // 踩死敵人
+                enemy->OnStomped(mario);
+
+                // 給予瑪利歐向上的反彈力 (例如 600.0f)
+                mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
+            }
+            else {
+                // 側面相撞
+                enemy->OnSideCollision(mario);
+            }
+        }
+    }
 }

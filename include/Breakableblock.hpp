@@ -12,13 +12,16 @@ public:
         return m_IsActive;
     }
 
+    // 在 BreakableBlock 類別中新增或修改此段：
     glm::vec2 GetCollisionPosition() const override {
-        return { m_Transform.translation.x, m_OriginalY };
+        // 修正：必須使用絕對的 m_WorldPosition.x
+        return { m_WorldPosition.x, m_OriginalY };
     }
 
-    void SetPosition(const glm::vec2& Position) {
+    // 注意：SetPosition 必須加上 override 以確保多型呼叫正確
+    void SetPosition(const glm::vec2& Position) override {
         Block::SetPosition(Position);
-        if (!m_IsBouncing) m_OriginalY = Position.y; // 記錄原始高度
+        if (!m_IsBouncing) m_OriginalY = Position.y;
     }
 
     void OnHit(Character* hitter) override {

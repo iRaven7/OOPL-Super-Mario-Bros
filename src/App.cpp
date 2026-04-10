@@ -76,6 +76,14 @@ void App::Update() {
             item->Update(deltaTime, m_CurrentMapBlocks);
         }
     }
+    for (auto& enemy : m_Enemies) {
+        if (enemy->IsActive()) {
+            enemy->UpdateAI(deltaTime, m_CurrentMapBlocks);
+        }
+    }
+
+    // 呼叫 CollisionManager 時傳入 m_Enemies
+    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies);
 
     // 4. 處理實體間的互動邏輯 (收集、頂飛)
     m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items);
