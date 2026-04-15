@@ -6,7 +6,10 @@ bool CollisionManager::CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, 
         std::abs(posA.y - posB.y) < (sizeA.y + sizeB.y) / 2.0f;
 }
 
-void CollisionManager::ProcessInteractions(Mario* mario, const std::vector<std::shared_ptr<Block>>& blocks, std::vector<std::shared_ptr<Item>>& items) {
+void CollisionManager::ProcessInteractions(Mario* mario,
+    const std::vector<std::shared_ptr<Block>>& blocks,
+    std::vector<std::shared_ptr<Item>>& items,
+    std::vector<std::shared_ptr<Enemy>>& enemies) {
     // 1. 處理道具與瑪利歐的收集判定
     glm::vec2 marioPos = mario->GetPosition();
     glm::vec2 marioSize = mario->GetSize();
@@ -46,11 +49,11 @@ void CollisionManager::ProcessInteractions(Mario* mario, const std::vector<std::
         }
     }
 
-    // 3. 處理瑪利歐與敵人的戰鬥碰撞
+    /// 3. 處理瑪利歐與敵人的戰鬥碰撞
     for (auto& enemy : enemies) {
         if (!enemy->IsActive()) continue;
 
-        glm::vec2 enemyPos = enemy->GetCollisionPosition();
+        glm::vec2 enemyPos = enemy->GetPosition();
         glm::vec2 enemySize = enemy->GetSize();
 
         if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {

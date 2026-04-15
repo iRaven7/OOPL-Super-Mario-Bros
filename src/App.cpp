@@ -86,7 +86,7 @@ void App::Update() {
     m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies);
 
     // 4. 處理實體間的互動邏輯 (收集、頂飛)
-    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items);
+    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies);
 
     // 5. 清理已死亡的道具
     for (auto it = m_Items.begin(); it != m_Items.end(); ) {
