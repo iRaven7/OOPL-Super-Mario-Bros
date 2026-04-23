@@ -68,14 +68,24 @@ void App::Update() {
     float inputDirection = 0.0f;
     if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
     else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) inputDirection = -1.0f;
+    if (m_Mario->IsCrouching() && m_Mario->IsGrounded()) {
+        inputDirection = 0.0f;
+    }
     bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
     bool wantsJump = Util::Input::IsKeyDown(Util::Keycode::SPACE);
+    bool wantsCrouch = Util::Input::IsKeyPressed(Util::Keycode::DOWN);
+    bool wantsFire = Util::Input::IsKeyDown(Util::Keycode::X);
 
     // 3. 實體物理更新 (各自處理與地形的阻擋)
 
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
+    m_Mario->SetCrouching(wantsCrouch);
+
+    //if (wantsFire) {
+    //    m_Mario->Shoot();
+    //}
 
     for (auto& block : m_CurrentMapBlocks) {
         block->Update(deltaTime);

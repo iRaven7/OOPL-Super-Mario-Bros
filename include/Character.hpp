@@ -48,14 +48,8 @@ public:
     }
 
     void UpdateRenderPosition(float cameraX) {
-        // 若碰撞框高度大於基本圖片高度 (16.0f)，計算需要下移的視覺偏移量
-        float yVisualOffset = 0.0f;
-        if (GetSize().y > 16.0f) {
-            yVisualOffset = (GetSize().y - 16.0f) / 2.0f;
-        }
-
-        // 渲染時，扣除攝影機 X 偏移，並將 Y 座標下移以對齊腳底
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y - yVisualOffset };
+        // 移除 yVisualOffset 的數學介入，確保渲染中心嚴格映射物理中心
+        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y };
     }
 
 protected:

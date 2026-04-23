@@ -11,11 +11,13 @@ public:
 
     virtual glm::vec2 GetHitboxSize() const = 0;
     virtual bool CanBreakBlocks() const = 0;
+    virtual bool CanShoot() const { return false; }
 
     // 定義該型態的各種動畫圖片路徑
     virtual std::string GetIdleImage() const = 0;
     virtual std::string GetJumpImage() const = 0;
     virtual std::string GetSkidImage() const = 0; // 煞車圖片
+    virtual std::string GetCrouchImage() const = 0;
     virtual std::vector<std::string> GetRunImages() const = 0; // 跑步幀集合
 };
 
@@ -26,6 +28,7 @@ public:
     bool CanBreakBlocks() const override { return false; }
 
     std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+    std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario_jump.png"; } // 替換為實際跳躍圖
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario_skid.png"; } // 替換為實際煞車圖
     std::vector<std::string> GetRunImages() const override {
@@ -41,6 +44,7 @@ public:
     bool CanBreakBlocks() const override { return true; }
 
     std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario.png"; }
+    std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_crouch.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_jump.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_skid.png"; }
     std::vector<std::string> GetRunImages() const override {

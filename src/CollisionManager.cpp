@@ -57,21 +57,19 @@ void CollisionManager::ProcessInteractions(Mario* mario,
         glm::vec2 enemySize = enemy->GetSize();
 
         if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
-            // 判定是否為踩踏：瑪利歐的底部大約高於敵人的中心點，且具備向下的速度
+            // 強化判定：計算瑪利歐底部與敵人頂部的相對位置
             float marioBottom = marioPos.y - (marioSize.y / 2.0f);
-            float enemyCenterY = enemyPos.y;
+            float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
 
-            // 存取瑪利歐的速度 (需在 Character.hpp 中新增 GetVelocity() 介面)
-            // 若尚無 GetVelocity()，可暫時僅以位置判斷：marioBottom > enemyCenterY + 4.0f
-            if (marioBottom > enemyCenterY && mario->GetVelocity().y < 0.0f) {
-                // 踩死敵人
+            // 條件：瑪利歐正在下墜 (vy < 0) 且 腳底高於敵人中心點以上
+            if (mario->GetVelocity().y < 0.0f && marioBottom > enemyPos.y) {
                 enemy->OnStomped(mario);
-
-                // 給予瑪利歐向上的反彈力 (例如 600.0f)
+                // 賦予反彈力，並將位置稍微移高防止連續碰撞
                 mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
+                mario->SetPosition({ mario->GetPosition().x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
             }
             else {
-                // 側面相撞
+                // 側面或由下往上撞到，才觸發受傷
                 enemy->OnSideCollision(mario);
             }
         }

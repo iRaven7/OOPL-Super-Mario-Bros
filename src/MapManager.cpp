@@ -3,7 +3,8 @@
 #include "Util/Logger.hpp"
 #include "BreakableBlock.hpp"
 #include "QuestionBlock.hpp"
-#include "Goomba.hpp" // 必須引入 Goomba 實作
+#include "Goomba.hpp"
+#include "UnbreakableBlock.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -52,6 +53,30 @@ void MapManager::LoadMap(const std::string& filePath,
                 // 生成栗寶寶 (Goomba)
                 auto enemy = std::make_shared<Goomba>(pos);
                 outEnemies.push_back(enemy);
+            }
+            else if (tileType == 'o') {
+                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png");
+                block->SetPosition(pos);
+                block->SetZIndex(10);
+                outBlocks.push_back(block);
+            }
+            else if (tileType == 'p') {
+                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png");
+                block->SetPosition(pos);
+                block->SetZIndex(10);
+                outBlocks.push_back(block);
+            }
+            else if (tileType == 'k') {
+                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png");
+                block->SetPosition(pos);
+                block->SetZIndex(10);
+                outBlocks.push_back(block);
+            }
+            else if (tileType == 'l') {
+                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png");
+                block->SetPosition(pos);
+                block->SetZIndex(10);
+                outBlocks.push_back(block);
             }
         }
         row++;
