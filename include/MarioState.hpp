@@ -52,4 +52,20 @@ public:
     }
 };
 
+// 火力態實作
+class FireMarioState : public MarioState {
+public:
+    glm::vec2 GetHitboxSize() const override { return { 16.0f, 32.0f }; }
+    bool CanBreakBlocks() const override { return true; }
+    bool CanShoot() const override { return true; } // 允許發射火球
+
+    std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario.png"; }
+    std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_jump.png"; }
+    std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_skid.png"; }
+    std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_crouch.png"; }
+    std::vector<std::string> GetRunImages() const override {
+        return { RESOURCE_DIR"/Entities/FireflowerMario/mario_run3.png", RESOURCE_DIR"/Entities/FireflowerMario/mario_run1.png" };
+    }
+};
+
 #endif // MARIO_STATE_HPP

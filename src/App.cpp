@@ -31,6 +31,9 @@ void App::LoadLevel(int level) {
     for (auto& item : m_Items) { m_Root.RemoveChild(item); }
     m_Items.clear();
 
+    for (auto& fb : m_Fireballs) { m_Root.RemoveChild(fb); }
+    m_Fireballs.clear();
+
     std::string mapPath;
     if (level == 0) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
@@ -83,9 +86,34 @@ void App::Update() {
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
     m_Mario->SetCrouching(wantsCrouch);
 
-    //if (wantsFire) {
-    //    m_Mario->Shoot();
-    //}
+    auto newFireballs = m_Mario->PopSpawnedFireballs();
+    for (auto& fb : newFireballs) {
+        m_Fireballs.push_back(fb);
+        m_Root.AddChild(fb);
+    }
+
+    // 更新火球物理
+    for (auto& fb : m_Fireballs) {
+        if (fb->IsActive()) fb->Update(deltaTime, m_CurrentMapBlocks);
+    }
+
+    // 將火球傳入 CollisionManager (注意：這裡等一下會修改 CollisionManager 介面)
+    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies, m_Fireballs);
+
+    // 清理已撞毀的火球
+    for (auto it = m_Fireballs.begin(); it != m_Fireballs.end(); ) {
+        if (!(*it)->IsActive()) {
+            m_Root.RemoveChild(*it);
+            it = m_Fireballs.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    if (wantsFire) {
+        m_Mario->Shoot();
+    }
 
     for (auto& block : m_CurrentMapBlocks) {
         block->Update(deltaTime);
@@ -107,10 +135,10 @@ void App::Update() {
     }
 
     // 呼叫 CollisionManager 時傳入 m_Enemies
-    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies);
+    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies, m_Fireballs);
 
     // 4. 處理實體間的互動邏輯 (收集、頂飛)
-    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies);
+    m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies, m_Fireballs);
 
     // 5. 清理已死亡的道具
     for (auto it = m_Items.begin(); it != m_Items.end(); ) {
@@ -169,6 +197,10 @@ void App::UpdateCamera() {
         if (enemy->IsActive()) {
             enemy->UpdateRenderPosition(m_CameraX);
         }
+    }
+
+    for (auto& fb : m_Fireballs) {
+        if (fb->IsActive()) fb->UpdateRenderPosition(m_CameraX);
     }
 }
 

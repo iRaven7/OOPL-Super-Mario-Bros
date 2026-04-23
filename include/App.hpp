@@ -8,6 +8,7 @@
 #include "Item.hpp"
 #include "CollisionManager.hpp"
 #include "Enemy.hpp"
+#include "Fireball.hpp"
 
 class App {
 public:
@@ -35,7 +36,7 @@ private:
     std::vector<std::shared_ptr<Item>> m_Items;
     std::vector<std::shared_ptr<Enemy>> m_Enemies;
     std::shared_ptr<Mario> m_Mario;
-
+    std::vector<std::shared_ptr<Fireball>> m_Fireballs;
     int m_CurrentLevel = 0;
     float m_CameraX = 0.0f;
 };

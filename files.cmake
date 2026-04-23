@@ -10,6 +10,11 @@ set(INCLUDE_FILES
     MapManager.hpp
     Mario.hpp
     Character.hpp
+    Breakableblock.hpp
+    QuestionBlock.hpp
+    Unbreakableblock.hpp
+    Coin.hpp
+    FireFlower.hpp
 )
 
 set(TEST_FILES

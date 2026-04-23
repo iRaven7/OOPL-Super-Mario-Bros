@@ -9,7 +9,8 @@ bool CollisionManager::CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, 
 void CollisionManager::ProcessInteractions(Mario* mario,
     const std::vector<std::shared_ptr<Block>>& blocks,
     std::vector<std::shared_ptr<Item>>& items,
-    std::vector<std::shared_ptr<Enemy>>& enemies) {
+    std::vector<std::shared_ptr<Enemy>>& enemies,
+    std::vector<std::shared_ptr<Fireball>>& fireballs) {
     // 1. 處理道具與瑪利歐的收集判定
     glm::vec2 marioPos = mario->GetPosition();
     glm::vec2 marioSize = mario->GetSize();
@@ -61,15 +62,13 @@ void CollisionManager::ProcessInteractions(Mario* mario,
             float marioBottom = marioPos.y - (marioSize.y / 2.0f);
             float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
 
-            // 條件：瑪利歐正在下墜 (vy < 0) 且 腳底高於敵人中心點以上
-            if (mario->GetVelocity().y < 0.0f && marioBottom > enemyPos.y) {
+            // 放寬判定：只要瑪利歐在下墜，且腳底沒有低於栗寶寶的中心點過多 (-4.0f 容錯)
+            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyPos.y - 4.0f) {
                 enemy->OnStomped(mario);
-                // 賦予反彈力，並將位置稍微移高防止連續碰撞
                 mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
                 mario->SetPosition({ mario->GetPosition().x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
             }
             else {
-                // 側面或由下往上撞到，才觸發受傷
                 enemy->OnSideCollision(mario);
             }
         }
@@ -108,6 +107,22 @@ void CollisionManager::ProcessInteractions(Mario* mario,
                     e1->SetPosition({ p1.x + 1.0f, p1.y });
                     e2->SetPosition({ p2.x - 1.0f, p2.y });
                 }
+            }
+        }
+    }
+    for (auto& fb : fireballs) {
+        if (!fb->IsActive()) continue;
+
+        glm::vec2 fbPos = fb->GetPosition();
+        glm::vec2 fbSize = fb->GetSize();
+
+        for (auto& enemy : enemies) {
+            if (!enemy->IsActive()) continue;
+
+            if (CheckAABB(fbPos, fbSize, enemy->GetPosition(), enemy->GetSize())) {
+                fb->Destroy();            // 火球消失
+                enemy->OnStomped(mario);  // 借用踩踏函式直接擊殺敵人
+                break; // 一顆火球只能擊殺一個敵人
             }
         }
     }

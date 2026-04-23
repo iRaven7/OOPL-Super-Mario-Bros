@@ -37,11 +37,18 @@ void MapManager::LoadMap(const std::string& filePath,
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
             }
-            else if (tileType == '2') {
+            else if (tileType == 'M') {
                 auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM);
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
+                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
+            }
+            // --- 新增：金幣與火焰花磚塊 ---
+            else if (tileType == 'C') { // 金幣方塊
+                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN);
+                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
+            }
+            else if (tileType == 'F') { // 火焰花方塊
+                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER);
+                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
             }
             else if (tileType == '3') {
                 auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");

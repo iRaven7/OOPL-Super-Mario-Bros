@@ -14,7 +14,8 @@ public:
     void ProcessInteractions(Mario* mario,
         const std::vector<std::shared_ptr<Block>>& blocks,
         std::vector<std::shared_ptr<Item>>& items,
-        std::vector<std::shared_ptr<Enemy>>& enemies);
+        std::vector<std::shared_ptr<Enemy>>& enemies,
+        std::vector<std::shared_ptr<Fireball>>& fireballs);
 
 private:
     bool CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, const glm::vec2& posB, const glm::vec2& sizeB) const;

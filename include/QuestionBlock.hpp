@@ -4,10 +4,12 @@
 #include "Block.hpp"
 #include "Item.hpp"
 #include "Mushroom.hpp" 
+#include "Coin.hpp"
+#include "FireFlower.hpp"
 
 class QuestionBlock : public Block {
 public:
-    enum class ItemType { MUSHROOM, COIN }; // 未來可擴充金幣
+    enum class ItemType { MUSHROOM, COIN, FIREFLOWER }; // 未來可擴充金幣
 
     QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
 
@@ -34,6 +36,12 @@ public:
         // 實例化道具
         if (m_ItemType == ItemType::MUSHROOM) {
             m_SpawnedItem = std::make_shared<Mushroom>(GetPosition());
+        }
+        else if (m_ItemType == ItemType::COIN) {
+            m_SpawnedItem = std::make_shared<Coin>(GetPosition());
+        }
+        else if (m_ItemType == ItemType::FIREFLOWER) {
+            m_SpawnedItem = std::make_shared<FireFlower>(GetPosition());
         }
     }
 
