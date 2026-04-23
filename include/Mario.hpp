@@ -188,12 +188,7 @@ public:
         return m_IsDead;
     }
 
-    //
-    void Shoot() {
-        if (m_State && m_State->CanShoot()) {
-            LOG_INFO("µo®g¤õ²y¡I");
-        }
-    }
+    
 private:
     std::unique_ptr<MarioState> m_State;
     bool m_IsCrouching = false;
