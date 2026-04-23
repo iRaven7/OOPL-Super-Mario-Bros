@@ -60,6 +60,8 @@ public:
 
 protected:
     glm::vec2 m_WorldPosition = { 0.0f, 0.0f };
+    glm::vec2 m_Velocity = { 0.0f, 0.0f }; // 將速度移至 protected，允許子類別直接修改
+    bool m_IsGrounded = false;             // 將接地狀態移至 protected
 
 private:
     bool CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, const glm::vec2& posB, const glm::vec2& sizeB) const {
@@ -68,8 +70,6 @@ private:
     }
 
     std::string m_ImagePath;
-    glm::vec2 m_Velocity = { 0.0f, 0.0f };
-    bool m_IsGrounded = false;
 
     // 物理常數
     static constexpr float GRAVITY = -2400.0f;

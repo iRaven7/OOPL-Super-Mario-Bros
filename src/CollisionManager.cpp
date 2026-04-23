@@ -76,4 +76,41 @@ void CollisionManager::ProcessInteractions(Mario* mario,
             }
         }
     }
+
+    // 4. 處理敵人與敵人之間的碰撞反彈
+    for (size_t i = 0; i < enemies.size(); ++i) {
+        for (size_t j = i + 1; j < enemies.size(); ++j) {
+            auto& e1 = enemies[i];
+            auto& e2 = enemies[j];
+
+            if (!e1->IsActive() || !e2->IsActive()) continue;
+
+            glm::vec2 p1 = e1->GetPosition();
+            glm::vec2 p2 = e2->GetPosition();
+
+            if (CheckAABB(p1, e1->GetSize(), p2, e2->GetSize())) {
+                glm::vec2 v1 = e1->GetVelocity();
+                glm::vec2 v2 = e2->GetVelocity();
+
+                // 依據相對位置決定反彈方向，確保兩者分離
+                if (p1.x < p2.x) {
+                    // e1 在左側，強迫向左走；e2 在右側，強迫向右走
+                    e1->SetVelocity({ -std::abs(v1.x), v1.y });
+                    e2->SetVelocity({ std::abs(v2.x), v2.y });
+
+                    // 位置微調，強制推開 1.0f 像素，防止下個 Frame 繼續重疊判定
+                    e1->SetPosition({ p1.x - 1.0f, p1.y });
+                    e2->SetPosition({ p2.x + 1.0f, p2.y });
+                }
+                else {
+                    // e1 在右側，e2 在左側
+                    e1->SetVelocity({ std::abs(v1.x), v1.y });
+                    e2->SetVelocity({ -std::abs(v2.x), v2.y });
+
+                    e1->SetPosition({ p1.x + 1.0f, p1.y });
+                    e2->SetPosition({ p2.x - 1.0f, p2.y });
+                }
+            }
+        }
+    }
 }

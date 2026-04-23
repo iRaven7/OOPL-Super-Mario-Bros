@@ -3,55 +3,57 @@
 #include "Util/Logger.hpp"
 #include "BreakableBlock.hpp"
 #include "QuestionBlock.hpp"
+#include "Goomba.hpp" // 必須引入 Goomba 實作
 
-std::vector<std::shared_ptr<Block>> MapManager::LoadMap(const std::string& filePath) {
-    std::vector<std::shared_ptr<Block>> blocks;
+void MapManager::LoadMap(const std::string& filePath,
+    std::vector<std::shared_ptr<Block>>& outBlocks,
+    std::vector<std::shared_ptr<Enemy>>& outEnemies) {
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
         LOG_ERROR("無法載入地圖: {}", filePath);
-        return blocks;
+        return;
     }
 
     std::string line;
     int row = 0;
 
-    // 假設螢幕中心為原點，可依據實際視窗大小與遊戲機制調整起始座標
     float startX = -300.0f;
     float startY = 200.0f;
 
     while (std::getline(file, line)) {
         for (size_t col = 0; col < line.length(); ++col) {
             char tileType = line[col];
-
+            // 預先計算好該圖塊的絕對世界座標
+            glm::vec2 pos = { startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE };
 
             if (tileType == '0') {
-                continue; // 遇到 0 直接跳過，不產生任何物件
+                continue;
             }
-            // 基礎判斷邏輯，1 對應地板
             else if (tileType == '1') {
                 auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png");
-                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetPosition(pos);
                 block->SetZIndex(10);
-                blocks.push_back(block);
+                outBlocks.push_back(block);
             }
             else if (tileType == '2') {
-                // 實例化為問號方塊，設定生成 MUSHROOM
                 auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM);
-                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetPosition(pos);
                 block->SetZIndex(10);
-                blocks.push_back(block);
+                outBlocks.push_back(block);
             }
             else if (tileType == '3') {
                 auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");
-                block->SetPosition({ startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE });
+                block->SetPosition(pos);
                 block->SetZIndex(10);
-                blocks.push_back(block); // 向上轉型為 shared_ptr<Block> 儲存
+                outBlocks.push_back(block);
             }
-            // 未來可擴充其他代碼，例如 '2' 為水管，'3' 為問號方塊
+            else if (tileType == '4') {
+                // 生成栗寶寶 (Goomba)
+                auto enemy = std::make_shared<Goomba>(pos);
+                outEnemies.push_back(enemy);
+            }
         }
         row++;
     }
-
-    return blocks;
 }

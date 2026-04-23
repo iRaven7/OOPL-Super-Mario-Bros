@@ -6,7 +6,7 @@
 
 class Goomba : public Enemy {
 public:
-    Goomba(glm::vec2 startPos) : Enemy(RESOURCE_DIR"/Entities/Enemies/goomba.png") {
+    Goomba(glm::vec2 startPos) : Enemy(RESOURCE_DIR"/Entities/Goomba/goomba.png") {
         SetPosition(startPos);
         m_Velocity.x = -m_WalkSpeed; // 預設向左走
         SetZIndex(40);
@@ -16,18 +16,19 @@ public:
         if (!m_IsActive) return;
 
         // 決定虛擬的輸入方向
-        float inputDirection = (m_Velocity.x > 0.0f) ? 1.0f : -1.0f;
+        float inputDirection = (m_Velocity.x > 0.0f) ? 0.5f : -0.5f;
 
         // 利用基底類別的 UpdatePhysics 處理重力與地形阻擋
-        // 傳入 false (不衝刺) 與 false (不跳躍)
         UpdatePhysics(deltaTime, inputDirection, false, false, blocks);
-
-        // 強制鎖定步速，避免被 Character 內部的加速度邏輯無限疊加
-        m_Velocity.x = inputDirection * m_WalkSpeed;
 
         // 偵測撞牆：如果實體被阻擋，UpdatePhysics 會將 m_Velocity.x 設為 0
         if (m_Velocity.x == 0.0f) {
-            m_Velocity.x = -inputDirection * m_WalkSpeed; // 反轉方向
+            // 撞牆了，給予反方向的速度
+            m_Velocity.x = -inputDirection * m_WalkSpeed;
+        }
+        else {
+            // 沒撞牆，維持固定的巡邏速度 (覆蓋掉 Character 內部的加速度疊加)
+            m_Velocity.x = inputDirection * m_WalkSpeed;
         }
     }
 
@@ -39,8 +40,12 @@ public:
 
     void OnSideCollision(Character* hitter) override {
         if (!m_IsActive) return;
-        LOG_INFO("瑪利歐受到傷害！");
-        // 未來在此處呼叫 hitter(瑪利歐) 的受擊降級邏輯
+
+        // 嘗試將 hitter 轉型為 Mario 以呼叫其專屬方法
+        Mario* mario = dynamic_cast<Mario*>(hitter);
+        if (mario) {
+            mario->TakeDamage();
+        }
     }
 
 private:

@@ -21,10 +21,15 @@ void App::Start() {
 void App::LoadLevel(int level) {
     m_CurrentLevel = level;
 
-    for (auto& block : m_CurrentMapBlocks) {
-        m_Root.RemoveChild(block);
-    }
+    // 清理舊有關卡的實體
+    for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
     m_CurrentMapBlocks.clear();
+
+    for (auto& enemy : m_Enemies) { m_Root.RemoveChild(enemy); }
+    m_Enemies.clear();
+
+    for (auto& item : m_Items) { m_Root.RemoveChild(item); }
+    m_Items.clear();
 
     std::string mapPath;
     if (level == 0) {
@@ -34,17 +39,16 @@ void App::LoadLevel(int level) {
         mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
     }
 
-    m_CurrentMapBlocks = m_MapManager.LoadMap(mapPath);
-    for (auto& block : m_CurrentMapBlocks) {
-        m_Root.AddChild(block);
-    }
+    // 呼叫更新後的 LoadMap 介面
+    m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies);
 
-    // 重設攝影機與角色起始位置
+    // 將解析出的實體註冊至算繪樹
+    for (auto& block : m_CurrentMapBlocks) { m_Root.AddChild(block); }
+    for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
+
     m_CameraX = 0.0f;
     m_Mario->SetPosition({ -300.0f, 1500.0f });
 
-    for (auto& item : m_Items) { m_Root.RemoveChild(item); }
-    m_Items.clear();
     LOG_INFO("已載入關卡: {}", level);
 }
 
@@ -52,6 +56,13 @@ void App::Update() {
     // 1. 計算時間差與防禦性限制
     float deltaTime = static_cast<float>(Util::Time::GetDeltaTimeMs()) / 1000.0f;
     if (deltaTime > 0.05f) deltaTime = 0.05f;
+
+    if (m_Mario->IsTransforming()) {
+        m_Mario->UpdateTransformation(deltaTime);
+        m_Root.Update(); // 僅渲染畫面，略過其餘物理與邏輯更新
+        return;
+    }
+
 
     // 2. 擷取輸入
     float inputDirection = 0.0f;
@@ -61,6 +72,9 @@ void App::Update() {
     bool wantsJump = Util::Input::IsKeyDown(Util::Keycode::SPACE);
 
     // 3. 實體物理更新 (各自處理與地形的阻擋)
+
+    m_Mario->Update(deltaTime);
+    m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
 
     for (auto& block : m_CurrentMapBlocks) {
@@ -118,22 +132,18 @@ void App::Update() {
 
 void App::UpdateCamera() {
     float marioWorldX = m_Mario->GetPosition().x;
-    float triggerX = 0.0f; // 螢幕中線觸發點
+    float triggerX = 0.0f;
 
-    // 計算攝影機的世界座標 (只允許向右推進，不可後退)
     if (marioWorldX > m_CameraX + triggerX) {
         m_CameraX = marioWorldX - triggerX;
     }
 
-    // 左邊界限制 (基於攝影機當前位置計算絕對物理邊界)
     float leftScreenBoundary = m_CameraX - 400.0f + 25.0f;
     if (m_Mario->GetPosition().x < leftScreenBoundary) {
         m_Mario->SetPosition({ leftScreenBoundary, m_Mario->GetPosition().y });
     }
 
-    // ==========================================
-    // 視圖矩陣轉換 (World Space -> Screen Space)
-    // ==========================================
+    // 更新所有實體的螢幕渲染座標
     m_Mario->UpdateRenderPosition(m_CameraX);
 
     for (auto& block : m_CurrentMapBlocks) {
@@ -142,6 +152,13 @@ void App::UpdateCamera() {
 
     for (auto& item : m_Items) {
         item->UpdateRenderPosition(m_CameraX);
+    }
+
+    // 新增：更新敵人的渲染座標，使其跟隨攝影機偏移
+    for (auto& enemy : m_Enemies) {
+        if (enemy->IsActive()) {
+            enemy->UpdateRenderPosition(m_CameraX);
+        }
     }
 }
 
