@@ -11,7 +11,7 @@ public:
         SetZIndex(5);
     }
 
-    void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
+    void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>&) override {
         // 火焰花只會緩慢上升，升到頂部後就停在原地
         if (m_State == State::SPAWNING) {
             glm::vec2 pos = GetPosition();
@@ -26,10 +26,18 @@ public:
     }
 
     void OnCollect(Mario* mario) override {
-        m_IsActive = false;
-        m_Visible = false;
-        // 吃到火焰花，切換為火力瑪利歐型態
-        mario->ChangeState(std::make_unique<FireMarioState>());
+        if (m_IsActive) {
+            m_IsActive = false;
+            m_Visible = false; // 確保收集後圖片消失
+
+            if (mario) {
+                // 修正類別名稱為 FireMarioState
+                mario->ChangeState(std::make_unique<FireMarioState>());
+
+                // 暫時將加分功能註解掉，等到進入第二階段實作計分系統後再補上
+                // mario->AddScore(1000); 
+            }
+        }
     }
 
 private:

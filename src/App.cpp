@@ -7,6 +7,7 @@
 void App::Start() {
     LOG_TRACE("Start");
 
+    m_CameraZoom = 1.8f;
     m_Mario = std::make_shared<Mario>();
     m_Root.AddChild(m_Mario);
 
@@ -182,25 +183,25 @@ void App::UpdateCamera() {
     }
 
     // 更新所有實體的螢幕渲染座標
-    m_Mario->UpdateRenderPosition(m_CameraX);
+    m_Mario->UpdateRenderPosition(m_CameraX, m_CameraZoom);
 
     for (auto& block : m_CurrentMapBlocks) {
-        block->UpdateRenderPosition(m_CameraX);
+        block->UpdateRenderPosition(m_CameraX, m_CameraZoom);
     }
 
     for (auto& item : m_Items) {
-        item->UpdateRenderPosition(m_CameraX);
+        item->UpdateRenderPosition(m_CameraX, m_CameraZoom);
     }
 
     // 新增：更新敵人的渲染座標，使其跟隨攝影機偏移
     for (auto& enemy : m_Enemies) {
         if (enemy->IsActive()) {
-            enemy->UpdateRenderPosition(m_CameraX);
+            enemy->UpdateRenderPosition(m_CameraX, m_CameraZoom);
         }
     }
 
     for (auto& fb : m_Fireballs) {
-        if (fb->IsActive()) fb->UpdateRenderPosition(m_CameraX);
+        if (fb->IsActive()) fb->UpdateRenderPosition(m_CameraX, m_CameraZoom);
     }
 }
 

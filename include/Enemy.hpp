@@ -19,6 +19,7 @@ public:
 
 protected:
     bool m_IsActive = true;
+    glm::vec2 m_BaseScale;
 };
 
 #endif // ENEMY_HPP

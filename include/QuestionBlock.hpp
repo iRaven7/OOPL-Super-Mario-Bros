@@ -25,7 +25,7 @@ public:
         if (!m_IsBouncing) m_OriginalY = Position.y;
     }
 
-    void OnHit(Character* hitter) override {
+    void OnHit(Character*) override {
         if (m_IsEmpty || m_IsBouncing) return; // 已經空了或正在動畫中，不反應
 
         m_IsBouncing = true;

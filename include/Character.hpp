@@ -47,15 +47,22 @@ public:
         return m_WorldPosition;
     }
 
-    void UpdateRenderPosition(float cameraX) {
-        // 移除 yVisualOffset 的數學介入，確保渲染中心嚴格映射物理中心
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y };
+    void UpdateRenderPosition(float cameraX, float cameraZoom) {
+        float yOffset = 0.0f;
+        m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+        m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
+
+        // 修正：保留 UpdateAnimation 設定的左右翻轉狀態 (擷取 X 軸的正負號)
+        float direction = (m_Transform.scale.x < 0.0f) ? -1.0f : 1.0f;
+        m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;
+        m_Transform.scale.y = m_BaseScale.y * cameraZoom;
     }
 
 protected:
     glm::vec2 m_WorldPosition = { 0.0f, 0.0f };
     glm::vec2 m_Velocity = { 0.0f, 0.0f }; // 將速度移至 protected，允許子類別直接修改
     bool m_IsGrounded = false;             // 將接地狀態移至 protected
+    glm::vec2 m_BaseScale = { 1.0f, 1.0f };
 
 private:
     bool CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, const glm::vec2& posB, const glm::vec2& sizeB) const {

@@ -12,7 +12,7 @@ public:
         m_Velocity.y = 400.0f; // 給予初始向上彈跳速度
     }
 
-    void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
+    void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>&) override {
         if (m_State == State::SPAWNING) {
             m_Velocity.y += GRAVITY * deltaTime;
             glm::vec2 pos = GetPosition();
@@ -27,7 +27,7 @@ public:
         }
     }
 
-    void OnCollect(Mario* mario) override {
+    void OnCollect(Mario*) override {
         // 從磚塊頂出的金幣會自動消失，通常不會透過瑪利歐主動「觸碰收集」
         m_IsActive = false;
         m_Visible = false;

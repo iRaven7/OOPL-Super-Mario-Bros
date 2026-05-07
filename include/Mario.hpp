@@ -122,14 +122,20 @@ public:
         }
     }
 
-    void UpdateRenderPosition(float cameraX) {
+    void UpdateRenderPosition(float cameraX, float cameraZoom) {
         float yOffset = 0.0f;
 
         if (m_IsCrouching && m_State && m_State->GetHitboxSize().y > 16.0f) {
             yOffset = 8.0f;
         }
 
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y + yOffset };
+        m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+        m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
+
+        // 修正：保留 UpdateAnimation 設定的左右翻轉狀態 (擷取 X 軸的正負號)
+        float direction = (m_Transform.scale.x < 0.0f) ? -1.0f : 1.0f;
+        m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;
+        m_Transform.scale.y = m_BaseScale.y * cameraZoom;
     }
 
     // ... 原有的 TakeDamage, Die, Update (無敵計時器) 等邏輯保持不變 ...

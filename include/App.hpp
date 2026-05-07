@@ -24,14 +24,18 @@ public:
     void End();
     void LoadLevel(int level);
 
+    float GetCameraZoom() const { return m_CameraZoom; }
+    void SetCameraZoom(float zoom) { m_CameraZoom = std::max(0.1f, zoom); }
+
 private:
     void UpdateCamera();
+    float m_CameraZoom = 1.0f;
 
     State m_CurrentState = State::START;
 
     Util::Renderer m_Root;
     MapManager m_MapManager;
-    CollisionManager m_CollisionManager; // 新增管理器
+    CollisionManager m_CollisionManager;
     std::vector<std::shared_ptr<Block>> m_CurrentMapBlocks;
     std::vector<std::shared_ptr<Item>> m_Items;
     std::vector<std::shared_ptr<Enemy>> m_Enemies;

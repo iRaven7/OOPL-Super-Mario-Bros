@@ -42,14 +42,16 @@ public:
         return { 16.0f, 16.0f };
     }
 
-    void UpdateRenderPosition(float cameraX) {
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y };
+    virtual void UpdateRenderPosition(float cameraX, float cameraZoom) {
+        m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+        m_Transform.translation.y = m_WorldPosition.y * cameraZoom;
+        m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
     // ==========================================
     // 物理與互動邏輯
     // ==========================================
-    virtual void OnHit(Character* hitter) {
+    virtual void OnHit(Character*) {
         m_JustHit = true; // 預設記錄受擊標記
     }
 
@@ -60,7 +62,7 @@ public:
         return val;
     }
 
-    virtual void Update(float deltaTime) {}
+    virtual void Update(float) {}
     virtual bool IsActive() const { return true; }
     virtual std::shared_ptr<Item> PopSpawnedItem() { return nullptr; }
 
@@ -68,6 +70,7 @@ protected: // 使用 protected 讓衍生類別 (BreakableBlock, QuestionBlock) 可直接存
     std::string m_ImagePath;
     glm::vec2 m_WorldPosition = { 0.0f, 0.0f };
     bool m_JustHit = false;
+    glm::vec2 m_BaseScale = { 1.0f, 1.0f };
 };
 
 #endif // BLOCK_HPP

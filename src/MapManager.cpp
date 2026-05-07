@@ -37,7 +37,7 @@ void MapManager::LoadMap(const std::string& filePath,
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
             }
-            else if (tileType == 'M') {
+            else if (tileType == 'M') { // Ä¨Û£¤è¶ô
                 auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM);
                 block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
             }

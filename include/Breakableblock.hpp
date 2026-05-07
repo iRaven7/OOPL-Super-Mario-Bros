@@ -14,7 +14,6 @@ public:
 
     // 在 BreakableBlock 類別中新增或修改此段：
     glm::vec2 GetCollisionPosition() const override {
-        // 修正：必須使用絕對的 m_WorldPosition.x
         return { m_WorldPosition.x, m_OriginalY };
     }
 

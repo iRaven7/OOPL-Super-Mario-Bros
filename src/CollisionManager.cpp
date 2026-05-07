@@ -58,17 +58,20 @@ void CollisionManager::ProcessInteractions(Mario* mario,
         glm::vec2 enemySize = enemy->GetSize();
 
         if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
-            // 強化判定：計算瑪利歐底部與敵人頂部的相對位置
+            // 計算真正的「瑪利歐腳底」與「敵人頭頂」Y 座標
             float marioBottom = marioPos.y - (marioSize.y / 2.0f);
             float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
 
-            // 放寬判定：只要瑪利歐在下墜，且腳底沒有低於栗寶寶的中心點過多 (-4.0f 容錯)
-            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyPos.y - 4.0f) {
+            // 嚴格判定：瑪利歐必須正在下墜，且「腳底」高於「敵人頭頂往下 8 像素」的緩衝區
+            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f) {
                 enemy->OnStomped(mario);
+                // 踩踏後給予向上的反彈力
                 mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
-                mario->SetPosition({ mario->GetPosition().x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
+                // 物理位置補償：將瑪利歐推回敵人頭頂上方，避免下一個 frame 繼續卡在敵人體內
+                mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
             }
             else {
+                // 只要不是從正上方踩下去，一律視為側面/下方碰撞，瑪利歐受傷！
                 enemy->OnSideCollision(mario);
             }
         }

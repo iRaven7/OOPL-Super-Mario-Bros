@@ -66,10 +66,14 @@ public:
         m_Transform.translation = Position;
     }
 
-    void UpdateRenderPosition(float cameraX) {
-        // 火球在空中會不斷旋轉
+    void UpdateRenderPosition(float cameraX, float cameraZoom) {
+        // 保留原有的火球旋轉邏輯
         m_Transform.rotation += 10.0f * (m_Velocity.x > 0 ? -deltaTime() : deltaTime());
-        m_Transform.translation = { m_WorldPosition.x - cameraX, m_WorldPosition.y };
+
+        // 套用縮放與座標轉換公式
+        m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+        m_Transform.translation.y = m_WorldPosition.y * cameraZoom;
+        m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
 private:
@@ -82,6 +86,7 @@ private:
 
     std::string m_ImagePath;
     glm::vec2 m_WorldPosition = { 0.0f, 0.0f };
+    glm::vec2 m_BaseScale = { 1.0f, 1.0f };
     glm::vec2 m_Velocity = { 0.0f, 0.0f };
     bool m_IsActive = true;
     static constexpr float GRAVITY = -1500.0f;
