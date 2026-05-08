@@ -2,6 +2,7 @@
 #define GOOMBA_HPP
 
 #include "Enemy.hpp"
+#include "GameStateManager.hpp"
 #include "Util/Logger.hpp"
 
 class Goomba : public Enemy {
@@ -35,6 +36,7 @@ public:
     void OnStomped(Character* hitter) override {
         m_IsActive = false;
         m_Visible = false; // 未來可改為切換至「被踩扁」的圖片並停留 0.5 秒
+        GameStateManager::GetInstance().AddScore(100);
         LOG_INFO("Goomba 被踩死了！");
     }
 

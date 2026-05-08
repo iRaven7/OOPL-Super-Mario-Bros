@@ -2,6 +2,7 @@
 #define MUSHROOM_HPP
 
 #include "Item.hpp"
+#include "GameStateManager.hpp"
 
 class Mushroom : public Item {
 public:
@@ -64,6 +65,7 @@ public:
         m_Visible = false;
         // 吃到蘑菇切換為大型態
         mario->ChangeState(std::make_unique<BigMarioState>());
+        GameStateManager::GetInstance().AddScore(1000);
     }
 
 private:

@@ -2,6 +2,7 @@
 #define FIREFLOWER_HPP
 
 #include "Item.hpp"
+#include "GameStateManager.hpp"
 
 class FireFlower : public Item {
 public:
@@ -29,7 +30,7 @@ public:
         if (m_IsActive) {
             m_IsActive = false;
             m_Visible = false; // 確保收集後圖片消失
-
+            GameStateManager::GetInstance().AddScore(1000);
             if (mario) {
                 // 修正類別名稱為 FireMarioState
                 mario->ChangeState(std::make_unique<FireMarioState>());

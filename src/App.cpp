@@ -3,6 +3,7 @@
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
 #include "Util/Time.hpp"
+#include "GameStateManager.hpp"
 
 void App::Start() {
     LOG_TRACE("Start");
@@ -60,7 +61,7 @@ void App::Update() {
     // 1. 計算時間差與防禦性限制
     float deltaTime = static_cast<float>(Util::Time::GetDeltaTimeMs()) / 1000.0f;
     if (deltaTime > 0.05f) deltaTime = 0.05f;
-
+    GameStateManager::GetInstance().UpdateTime(deltaTime);
     if (m_Mario->IsTransforming()) {
         m_Mario->UpdateTransformation(deltaTime);
         m_Root.Update(); // 僅渲染畫面，略過其餘物理與邏輯更新

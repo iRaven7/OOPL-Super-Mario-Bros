@@ -2,6 +2,7 @@
 #define COIN_HPP
 
 #include "Item.hpp"
+#include "GameStateManager.hpp"
 
 class Coin : public Item {
 public:
@@ -31,6 +32,8 @@ public:
         // 從磚塊頂出的金幣會自動消失，通常不會透過瑪利歐主動「觸碰收集」
         m_IsActive = false;
         m_Visible = false;
+        GameStateManager::GetInstance().AddCoin(1);
+        GameStateManager::GetInstance().AddScore(200);
     }
 
 private:

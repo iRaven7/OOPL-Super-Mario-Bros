@@ -15,6 +15,7 @@ set(INCLUDE_FILES
     Unbreakableblock.hpp
     Coin.hpp
     FireFlower.hpp
+    GameStateManager.hpp
 )
 
 set(TEST_FILES
