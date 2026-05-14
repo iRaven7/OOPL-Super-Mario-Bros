@@ -16,6 +16,7 @@ set(INCLUDE_FILES
     Coin.hpp
     FireFlower.hpp
     GameStateManager.hpp
+    Koopa.hpp
 )
 
 set(TEST_FILES

@@ -113,19 +113,23 @@ void CollisionManager::ProcessInteractions(Mario* mario,
             }
         }
     }
-    for (auto& fb : fireballs) {
-        if (!fb->IsActive()) continue;
-
-        glm::vec2 fbPos = fb->GetPosition();
-        glm::vec2 fbSize = fb->GetSize();
+    // 假設你已在 ProcessInteractions 迴圈內檢查火球與敵人的碰撞：
+    for (auto& fireball : fireballs) {
+        if (!fireball->IsActive()) continue;
 
         for (auto& enemy : enemies) {
             if (!enemy->IsActive()) continue;
 
-            if (CheckAABB(fbPos, fbSize, enemy->GetPosition(), enemy->GetSize())) {
-                fb->Destroy();            // 火球消失
-                enemy->OnStomped(mario);  // 借用踩踏函式直接擊殺敵人
-                break; // 一顆火球只能擊殺一個敵人
+            // 檢查 AABB 碰撞
+            if (CheckAABB(fireball->GetPosition(), fireball->GetSize(),
+                enemy->GetPosition(), enemy->GetSize())) {
+
+                // 觸發火球擊殺邏輯
+                enemy->OnFireballHit();
+
+                // 火球消失
+                fireball->SetActive(false);
+                break; // 這顆火球已消耗，跳出內層迴圈
             }
         }
     }

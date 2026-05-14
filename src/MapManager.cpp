@@ -5,6 +5,7 @@
 #include "QuestionBlock.hpp"
 #include "Goomba.hpp"
 #include "UnbreakableBlock.hpp"
+#include "Koopa.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -59,6 +60,11 @@ void MapManager::LoadMap(const std::string& filePath,
             else if (tileType == '4') {
                 // 生成栗寶寶 (Goomba)
                 auto enemy = std::make_shared<Goomba>(pos);
+                outEnemies.push_back(enemy);
+            }
+            else if (tileType == '5') {
+                // 生成 Koopa
+                auto enemy = std::make_shared<Koopa>(pos);
                 outEnemies.push_back(enemy);
             }
             else if (tileType == 'o') {
