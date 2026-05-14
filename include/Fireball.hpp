@@ -56,6 +56,9 @@ public:
         SetPosition(currentPos);
     }
 
+
+
+    void SetActive(bool active) { m_IsActive = active; }
     bool IsActive() const { return m_IsActive; }
     void Destroy() { m_IsActive = false; m_Visible = false; }
     glm::vec2 GetPosition() const { return m_WorldPosition; }

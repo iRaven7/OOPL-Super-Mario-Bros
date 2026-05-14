@@ -47,7 +47,7 @@ public:
         return m_WorldPosition;
     }
 
-    void UpdateRenderPosition(float cameraX, float cameraZoom) {
+    virtual void UpdateRenderPosition(float cameraX, float cameraZoom) {
         float yOffset = 0.0f;
         m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
         m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;

@@ -8,34 +8,42 @@
 
 class Koopa : public Enemy {
 public:
-    // 定義慢慢龜的有限狀態機
     enum class State {
         Walking,
         ShellIdle,
         ShellMoving
     };
 
-    // 註：請確認 RESOURCES_DIR 內的實際圖片路徑並進行替換
     Koopa(glm::vec2 startPos) : Enemy(RESOURCE_DIR"/Entities/Koopa/koopa1.png") {
+        // 【關鍵修正 1】：強制初始化縮放矩陣，阻絕記憶體亂數造成的無限大或隱形
+        m_BaseScale = { 1.0f, 1.0f };
+        m_Transform.scale = m_BaseScale;
+
+        // 提升初始生成高度，防止較高的慢慢龜一生成就卡進地底磚塊內
+        startPos.y += 12.0f;
         SetPosition(startPos);
+
         m_Velocity.x = -m_WalkSpeed;
         m_State = State::Walking;
-        SetZIndex(40);
+        SetZIndex(35); // 將層級微調，以利區分與其他敵人的算繪順序
     }
 
     void UpdateRenderPosition(float cameraX, float cameraZoom) override {
         float yOffset = 0.0f;
 
-        // 假設慢慢龜站立圖片比龜殼高 16 像素，中心點會高 8 像素。
-        // 請依據你實際放入的圖片尺寸調整此數值 (例如 8.0f 或 16.0f)
         if (m_State == State::Walking) {
-            yOffset = 8.0f;
+            yOffset = 8.0f; // 請依據實際 koopa.png 的高度落差微調此常數
+        }
+        else {
+            // 龜殼狀態 (shell.png) 通常是 16x16，與基礎圖塊等高，通常不需要補償
+            yOffset = 0.0f;
         }
 
         m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+
+        // 將 yOffset 加入最終的 Y 軸算繪座標中 (不影響真實的 m_WorldPosition)
         m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
 
-        // 維持左右翻轉邏輯
         float direction = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
         m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;
         m_Transform.scale.y = m_BaseScale.y * cameraZoom;
@@ -44,21 +52,17 @@ public:
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
         if (!m_IsActive) return;
 
-        // 靜止龜殼狀態：僅套用重力，不給予水平推力
         if (m_State == State::ShellIdle) {
             UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
-            m_Velocity.x = 0.0f; // 確保摩擦力使其完全停止
+            m_Velocity.x = 0.0f;
             return;
         }
 
-        // 根據狀態決定移動速度
         float currentSpeed = (m_State == State::ShellMoving) ? m_ShellSpeed : m_WalkSpeed;
         float inputDirection = (m_Velocity.x > 0.0f) ? 0.5f : -0.5f;
 
-        // 套用物理運算
         UpdatePhysics(deltaTime, inputDirection, false, false, blocks);
 
-        // 撞牆偵測與反彈邏輯
         if (m_Velocity.x == 0.0f) {
             m_Velocity.x = -inputDirection * currentSpeed;
         }
@@ -67,7 +71,6 @@ public:
         }
     }
 
-
     void OnStomped(Character* hitter) override {
         if (!m_IsActive) return;
 
@@ -75,18 +78,17 @@ public:
             m_State = State::ShellIdle;
             m_Velocity.x = 0.0f;
 
-            // 切換為龜殼圖片 (請確保檔名與路徑正確)
+            // 【關鍵修正 2】：確保你的圖片檔名大小寫與此處完全一致 (如 shell.png 或 Shell.png)
             SetDrawable(std::make_shared<Util::Image>(RESOURCE_DIR"/Entities/Koopa/shell.png"));
 
-            // 由於龜殼高度變矮，碰撞箱(Hitbox)的高度若能調整會更精確
-            // m_BaseScale.y = 0.5f; // 視你的實作需求而定
+            // 移除手動的 Y 軸硬編碼位移，讓下一個 Frame 的 UpdatePhysics 重力自然將矮龜殼往下拉至地面
 
             LOG_INFO("Koopa 進入靜止龜殼狀態");
         }
         else if (m_State == State::ShellMoving) {
             m_State = State::ShellIdle;
             m_Velocity.x = 0.0f;
-            LOG_INFO("滑行龜殼停止");
+            LOG_INFO("滑行龜殼被踩踏，停止滑行");
         }
         else if (m_State == State::ShellIdle) {
             KickShell(hitter);
@@ -99,13 +101,11 @@ public:
         Mario* mario = dynamic_cast<Mario*>(hitter);
 
         if (m_State == State::Walking || m_State == State::ShellMoving) {
-            // 行走或滑行狀態下，側面碰到瑪利歐會造成傷害
             if (mario) {
                 mario->TakeDamage();
             }
         }
         else if (m_State == State::ShellIdle) {
-            // 側面碰到靜止龜殼，將其踢出
             KickShell(hitter);
         }
     }
@@ -113,23 +113,22 @@ public:
     State GetState() const { return m_State; }
 
 private:
-    // 輔助函式：處理踢龜殼的物理向量
     void KickShell(Character* hitter) {
         m_State = State::ShellMoving;
 
-        // 根據碰撞者的相對 X 座標，決定龜殼的射出方向
+        // 依據碰撞來源相對位置射出龜殼
         if (hitter->GetPosition().x < GetPosition().x) {
-            m_Velocity.x = m_ShellSpeed;  // 從左側撞擊，向右踢出
+            m_Velocity.x = m_ShellSpeed;
         }
         else {
-            m_Velocity.x = -m_ShellSpeed; // 從右側撞擊，向左踢出
+            m_Velocity.x = -m_ShellSpeed;
         }
         LOG_INFO("龜殼被踢出了！");
     }
 
     State m_State;
     float m_WalkSpeed = 100.0f;
-    float m_ShellSpeed = 350.0f; // 滑行速度應顯著高於行走速度
+    float m_ShellSpeed = 350.0f;
 };
 
 #endif // KOOPA_HPP
