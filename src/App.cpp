@@ -4,6 +4,8 @@
 #include "Util/Logger.hpp"
 #include "Util/Time.hpp"
 #include "GameStateManager.hpp"
+#include <iomanip>
+#include <sstream>
 
 void App::Start() {
     LOG_TRACE("Start");
@@ -16,6 +18,30 @@ void App::Start() {
 
     // 新的狀態切換方式 (測試大型態破壞方塊用)
     m_Mario->ChangeState(std::make_unique<BigMarioState>());
+
+    // 建立分數 UI
+    m_ScoreUI = std::make_shared<Util::GameObject>();
+    m_ScoreText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "SCORE: 000000", Util::Color{ 255, 255, 255, 255 });
+    m_ScoreUI->SetDrawable(m_ScoreText); // 綁定算繪元件
+    m_ScoreUI->SetZIndex(100);
+    m_ScoreUI->m_Transform.translation = { -300.0f, 250.0f };
+    m_Root.AddChild(m_ScoreUI);
+
+    // 建立金幣 UI
+    m_CoinUI = std::make_shared<Util::GameObject>();
+    m_CoinText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "COINS: 00", Util::Color{ 255, 255, 255, 255 });
+    m_CoinUI->SetDrawable(m_CoinText);
+    m_CoinUI->SetZIndex(100);
+    m_CoinUI->m_Transform.translation = { 0.0f, 250.0f };
+    m_Root.AddChild(m_CoinUI);
+
+    // 建立時間 UI
+    m_TimeUI = std::make_shared<Util::GameObject>();
+    m_TimeText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "TIME: 400", Util::Color{ 255, 255, 255, 255 });
+    m_TimeUI->SetDrawable(m_TimeText);
+    m_TimeUI->SetZIndex(100);
+    m_TimeUI->m_Transform.translation = { 300.0f, 250.0f };
+    m_Root.AddChild(m_TimeUI);
 
     m_CurrentState = State::UPDATE;
 }
@@ -87,6 +113,26 @@ void App::Update() {
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
     m_Mario->SetCrouching(wantsCrouch);
+
+    auto& stateManager = GameStateManager::GetInstance();
+
+    // 修正警告：改用 GetDeltaTimeMs()。因為回傳值為毫秒，需除以 1000.0f 轉為秒數
+    stateManager.UpdateTime(Util::Time::GetDeltaTimeMs() / 1000.0f);
+
+    // 直接更新分數字串
+    std::ostringstream scoreSs;
+    scoreSs << "SCORE: " << std::setw(6) << std::setfill('0') << stateManager.GetScore();
+    m_ScoreText->SetText(scoreSs.str());
+
+    // 直接更新金幣字串
+    std::ostringstream coinSs;
+    coinSs << "COINS: " << std::setw(2) << std::setfill('0') << stateManager.GetCoins();
+    m_CoinText->SetText(coinSs.str());
+
+    // 直接更新時間字串
+    std::ostringstream timeSs;
+    timeSs << "TIME: " << std::setw(3) << std::setfill('0') << stateManager.GetTimeRemaining();
+    m_TimeText->SetText(timeSs.str());
 
     auto newFireballs = m_Mario->PopSpawnedFireballs();
     for (auto& fb : newFireballs) {
