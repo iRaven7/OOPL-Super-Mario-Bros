@@ -4,6 +4,7 @@
 #include "Enemy.hpp"
 #include "Mario.hpp"
 #include "Util/Logger.hpp"
+#include "Util/Image.hpp"
 
 class Koopa : public Enemy {
 public:
@@ -20,6 +21,24 @@ public:
         m_Velocity.x = -m_WalkSpeed;
         m_State = State::Walking;
         SetZIndex(40);
+    }
+
+    void UpdateRenderPosition(float cameraX, float cameraZoom) override {
+        float yOffset = 0.0f;
+
+        // 假設慢慢龜站立圖片比龜殼高 16 像素，中心點會高 8 像素。
+        // 請依據你實際放入的圖片尺寸調整此數值 (例如 8.0f 或 16.0f)
+        if (m_State == State::Walking) {
+            yOffset = 8.0f;
+        }
+
+        m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
+        m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
+
+        // 維持左右翻轉邏輯
+        float direction = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
+        m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;
+        m_Transform.scale.y = m_BaseScale.y * cameraZoom;
     }
 
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
@@ -48,22 +67,28 @@ public:
         }
     }
 
+
     void OnStomped(Character* hitter) override {
         if (!m_IsActive) return;
 
         if (m_State == State::Walking) {
             m_State = State::ShellIdle;
             m_Velocity.x = 0.0f;
-            // TODO: 此處應呼叫 SetDrawable 切換為龜殼的圖片
-            LOG_INFO("Koopa 被踩踏，進入靜止龜殼狀態");
+
+            // 切換為龜殼圖片 (請確保檔名與路徑正確)
+            SetDrawable(std::make_shared<Util::Image>(RESOURCE_DIR"/Entities/Koopa/shell.png"));
+
+            // 由於龜殼高度變矮，碰撞箱(Hitbox)的高度若能調整會更精確
+            // m_BaseScale.y = 0.5f; // 視你的實作需求而定
+
+            LOG_INFO("Koopa 進入靜止龜殼狀態");
         }
         else if (m_State == State::ShellMoving) {
             m_State = State::ShellIdle;
             m_Velocity.x = 0.0f;
-            LOG_INFO("滑行龜殼被踩踏，停止滑行");
+            LOG_INFO("滑行龜殼停止");
         }
         else if (m_State == State::ShellIdle) {
-            // 踩踏靜止的龜殼，會將其踢出
             KickShell(hitter);
         }
     }
