@@ -4,6 +4,7 @@
 #include "Enemy.hpp"
 #include "Mario.hpp"
 #include "Util/Logger.hpp"
+#include "Util/Image.hpp"
 
 class PiranhaPlant : public Enemy {
 public:
@@ -13,6 +14,8 @@ public:
         Exposed,    // 完全露出水管
         Retracting  // 正在下降
     };
+
+    bool IsStompable() const override { return false; }
 
     // 請確保圖片路徑與檔名完全符合您實際放置的位置
     PiranhaPlant(glm::vec2 pipeTopCenterPos) : Enemy(RESOURCE_DIR"/Entities/PiranhaPlant/piranha_plant.png") {
@@ -25,7 +28,7 @@ public:
         m_HideY = pipeTopCenterPos.y - verticalOffset;
 
         // 初始狀態設為隱藏
-        m_WorldPosition = { pipeTopCenterPos.x, m_HideY };
+        m_WorldPosition = { pipeTopCenterPos.x - 8.0f , m_HideY };
         SetPosition(m_WorldPosition);
 
         m_State = State::Hiding;

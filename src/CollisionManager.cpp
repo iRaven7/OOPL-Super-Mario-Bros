@@ -1,4 +1,7 @@
 #include "CollisionManager.hpp"
+#include "Koopa.hpp"
+#include "GameStateManager.hpp"
+#include "Util/Logger.hpp"
 #include <cmath>
 
 bool CollisionManager::CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, const glm::vec2& posB, const glm::vec2& sizeB) const {
@@ -20,6 +23,58 @@ void CollisionManager::ProcessInteractions(Mario* mario,
 
         if (CheckAABB(marioPos, marioSize, item->GetPosition(), item->GetSize())) {
             item->OnCollect(mario); // 觸發收集
+        }
+    }
+
+    // --- 敵人與敵人之間的碰撞解析 ---
+    for (size_t i = 0; i < enemies.size(); ++i) {
+        auto& enemyA = enemies[i];
+        if (!enemyA->IsActive()) continue;
+
+        // 從 i + 1 開始遍歷，避免重複檢查或自我碰撞
+        for (size_t j = i + 1; j < enemies.size(); ++j) {
+            auto& enemyB = enemies[j];
+            if (!enemyB->IsActive()) continue;
+
+            // 檢查 AABB 邊界是否重疊
+            if (CheckAABB(enemyA->GetPosition(), enemyA->GetSize(),
+                enemyB->GetPosition(), enemyB->GetSize())) {
+
+                // 嘗試將兩者轉型為慢慢龜 (若轉型失敗會回傳 nullptr)
+                Koopa* koopaA = dynamic_cast<Koopa*>(enemyA.get());
+                Koopa* koopaB = dynamic_cast<Koopa*>(enemyB.get());
+
+                // 判斷是否為「滑行中」的龜殼
+                bool aIsMovingShell = (koopaA && koopaA->GetState() == Koopa::State::ShellMoving);
+                bool bIsMovingShell = (koopaB && koopaB->GetState() == Koopa::State::ShellMoving);
+
+                if (aIsMovingShell && !bIsMovingShell) {
+                    // A 是滑行龜殼，消滅 B
+                    enemyB->OnFireballHit(); // 沿用通用的一擊必殺介面
+                    GameStateManager::GetInstance().AddScore(100);
+                    LOG_INFO("龜殼 (A) 擊殺了敵人！");
+                }
+                else if (bIsMovingShell && !aIsMovingShell) {
+                    // B 是滑行龜殼，消滅 A
+                    enemyA->OnFireballHit();
+                    GameStateManager::GetInstance().AddScore(100);
+                    LOG_INFO("龜殼 (B) 擊殺了敵人！");
+                }
+                else if (aIsMovingShell && bIsMovingShell) {
+                    // 兩個滑行龜殼相撞，雙雙毀滅
+                    enemyA->OnFireballHit();
+                    enemyB->OnFireballHit();
+                    GameStateManager::GetInstance().AddScore(200);
+                    LOG_INFO("兩個龜殼互相撞毀！");
+                }
+                else {
+                    // (可選) 兩個普通敵人相撞時的物理防呆：互相反轉 X 軸速度以彈開，防止重疊
+                    auto velA = enemyA->GetVelocity();
+                    auto velB = enemyB->GetVelocity();
+                    enemyA->SetVelocity({ -velA.x, velA.y });
+                    enemyB->SetVelocity({ -velB.x, velB.y });
+                }
+            }
         }
     }
 
@@ -51,6 +106,7 @@ void CollisionManager::ProcessInteractions(Mario* mario,
     }
 
     /// 3. 處理瑪利歐與敵人的戰鬥碰撞
+    /// 3. 處理瑪利歐與敵人的戰鬥碰撞
     for (auto& enemy : enemies) {
         if (!enemy->IsActive()) continue;
 
@@ -58,20 +114,21 @@ void CollisionManager::ProcessInteractions(Mario* mario,
         glm::vec2 enemySize = enemy->GetSize();
 
         if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
-            // 計算真正的「瑪利歐腳底」與「敵人頭頂」Y 座標
             float marioBottom = marioPos.y - (marioSize.y / 2.0f);
             float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
 
-            // 嚴格判定：瑪利歐必須正在下墜，且「腳底」高於「敵人頭頂往下 8 像素」的緩衝區
-            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f) {
+            // 移除 dynamic_cast，改用多型介面判斷
+            bool canBeStomped = enemy->IsStompable();
+
+            // 嚴格判定：瑪利歐正在下墜、腳底高於緩衝區，且「該敵人允許被踩踏」
+            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f && canBeStomped) {
                 enemy->OnStomped(mario);
-                // 踩踏後給予向上的反彈力
                 mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
-                // 物理位置補償：將瑪利歐推回敵人頭頂上方，避免下一個 frame 繼續卡在敵人體內
                 mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
             }
             else {
-                // 只要不是從正上方踩下去，一律視為側面/下方碰撞，瑪利歐受傷！
+                // 不符合踩踏條件 (包含側面碰撞、由下往上、或遇到不可踩踏的生物)
+                // 由於不可踩踏，一律視為瑪利歐受到側面/接觸傷害
                 enemy->OnSideCollision(mario);
             }
         }

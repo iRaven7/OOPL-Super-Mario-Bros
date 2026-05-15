@@ -14,6 +14,7 @@ public:
     virtual void OnSideCollision(Character* hitter) = 0; // °¼­±¬Û¼²
     virtual void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) = 0;
 
+    virtual bool IsStompable() const { return true; }
     bool IsActive() const { return m_IsActive; }
     virtual void OnFireballHit() {
         m_IsActive = false;
