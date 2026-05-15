@@ -6,6 +6,7 @@
 #include "Goomba.hpp"
 #include "UnbreakableBlock.hpp"
 #include "Koopa.hpp"
+#include "PiranhaPlant.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -16,6 +17,7 @@ void MapManager::LoadMap(const std::string& filePath,
         LOG_ERROR("無法載入地圖: {}", filePath);
         return;
     }
+
 
     std::string line;
     int row = 0;
@@ -65,6 +67,11 @@ void MapManager::LoadMap(const std::string& filePath,
             else if (tileType == '5') {
                 // 生成 Koopa
                 auto enemy = std::make_shared<Koopa>(pos);
+                outEnemies.push_back(enemy);
+            }
+            else if (tileType == 'P') {
+                // 生成 Koopa
+                auto enemy = std::make_shared<PiranhaPlant>(pos);
                 outEnemies.push_back(enemy);
             }
             else if (tileType == 'o') {

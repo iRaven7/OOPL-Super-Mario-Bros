@@ -127,7 +127,7 @@ private:
     }
 
     State m_State;
-    float m_WalkSpeed = 100.0f;
+    float m_WalkSpeed = 50.0f;
     float m_ShellSpeed = 350.0f;
 };
 

@@ -17,6 +17,7 @@ set(INCLUDE_FILES
     FireFlower.hpp
     GameStateManager.hpp
     Koopa.hpp
+    PiranhaPlant.hpp
 )
 
 set(TEST_FILES
