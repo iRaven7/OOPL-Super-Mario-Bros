@@ -30,11 +30,17 @@ public:
     int GetCoins() const { return m_Coins; }
     int GetTimeRemaining() const { return static_cast<int>(m_TimeRemaining); }
 
+    void SetLevelComplete(bool complete) { m_LevelComplete = complete; }
+    bool IsLevelComplete() const { return m_LevelComplete; }
+
+
     void Reset() {
         m_Score = 0;
         m_Coins = 0;
         m_TimeRemaining = 400.0f; // 預設關卡時間
+        m_LevelComplete = false;
     }
+
 
 private:
     GameStateManager() = default;
@@ -45,6 +51,7 @@ private:
     int m_Score = 0;
     int m_Coins = 0;
     float m_TimeRemaining = 400.0f;
+    bool m_LevelComplete = false;
 };
 
 #endif // GAME_STATE_MANAGER_HPP

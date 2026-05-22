@@ -94,6 +94,30 @@ void App::Update() {
         return;
     }
 
+    // [新增] 檢查是否達到過關條件（例如：瑪利歐的 X 座標超過地圖終點）
+    // 這個 5000.0f 可以未來寫在地圖檔中，或是根據讀取的地圖寬度來決定
+    if (m_Mario->GetPosition().x > 500.0f && !GameStateManager::GetInstance().IsLevelComplete()) {
+        GameStateManager::GetInstance().SetLevelComplete(true);
+    }
+
+    // [新增] 捕捉到場景切換提示，執行換關邏輯
+    if (GameStateManager::GetInstance().IsLevelComplete()) {
+        // 這裡可以播放過關音效、顯示結算畫面、或是停留幾秒鐘
+
+        // 切換到下一關 (假設下一關的編號是目前的 +1)
+        LoadLevel(m_CurrentLevel + 1);
+
+        // 重置過關狀態，避免無限載入
+        GameStateManager::GetInstance().SetLevelComplete(false);
+
+        return; // 換關後直接跳出本次 Update，避免後續存取到舊實體
+    }
+
+    if (GameStateManager::GetInstance().IsLevelComplete()) {
+        LoadLevel(m_CurrentLevel + 1);
+        GameStateManager::GetInstance().SetLevelComplete(false);
+        return;
+    }
 
     // 2. 擷取輸入
     float inputDirection = 0.0f;
@@ -133,6 +157,7 @@ void App::Update() {
     std::ostringstream timeSs;
     timeSs << "TIME: " << std::setw(3) << std::setfill('0') << stateManager.GetTimeRemaining();
     m_TimeText->SetText(timeSs.str());
+
 
     auto newFireballs = m_Mario->PopSpawnedFireballs();
     for (auto& fb : newFireballs) {
