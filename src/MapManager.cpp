@@ -18,7 +18,6 @@ void MapManager::LoadMap(const std::string& filePath,
         return;
     }
 
-
     std::string line;
     int row = 0;
 
@@ -28,75 +27,45 @@ void MapManager::LoadMap(const std::string& filePath,
     while (std::getline(file, line)) {
         for (size_t col = 0; col < line.length(); ++col) {
             char tileType = line[col];
-            // 預先計算好該圖塊的絕對世界座標
-            glm::vec2 pos = { startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE };
 
+            // 遇到空白直接跳過，提早結束這回合
             if (tileType == '0') {
                 continue;
             }
-            else if (tileType == '1') {
-                auto block = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png");
+
+            // 預先計算好該圖塊的絕對世界座標
+            glm::vec2 pos = { startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE };
+
+            // 寫一個小小的輔助函式，統一處理方塊的基本設定
+            auto addBlock = [&](const std::shared_ptr<Block>& block) {
                 block->SetPosition(pos);
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
-            }
-            else if (tileType == 'M') { // 蘑菇方塊
-                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM);
-                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
-            }
-            // --- 新增：金幣與火焰花磚塊 ---
-            else if (tileType == 'C') { // 金幣方塊
-                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN);
-                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
-            }
-            else if (tileType == 'F') { // 火焰花方塊
-                auto block = std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER);
-                block->SetPosition(pos); block->SetZIndex(10); outBlocks.push_back(block);
-            }
-            else if (tileType == '3') {
-                auto block = std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png");
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
-            }
-            else if (tileType == '4') {
-                // 生成栗寶寶 (Goomba)
-                auto enemy = std::make_shared<Goomba>(pos);
-                outEnemies.push_back(enemy);
-            }
-            else if (tileType == '5') {
-                // 生成 Koopa
-                auto enemy = std::make_shared<Koopa>(pos);
-                outEnemies.push_back(enemy);
-            }
-            else if (tileType == 'P') {
-                // 生成 Koopa
-                auto enemy = std::make_shared<PiranhaPlant>(pos);
-                outEnemies.push_back(enemy);
-            }
-            else if (tileType == 'o') {
-                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png");
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
-            }
-            else if (tileType == 'p') {
-                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png");
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
-            }
-            else if (tileType == 'k') {
-                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png");
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
-            }
-            else if (tileType == 'l') {
-                auto block = std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png");
-                block->SetPosition(pos);
-                block->SetZIndex(10);
-                outBlocks.push_back(block);
+                };
+
+            // 改用 switch 讓邏輯一目了然
+            switch (tileType) {
+                // 一般方塊系列
+            case '1': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png")); break;
+            case '3': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png")); break;
+
+                // 問號方塊系列
+            case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM)); break;
+            case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN)); break;
+            case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER)); break;
+
+                // 水管系列
+            case 'o': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
+            case 'p': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
+            case 'k': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
+            case 'l': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
+
+                // 敵人系列 (敵人不需要設定 ZIndex，直接丟進陣列)
+            case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;
+            case '5': outEnemies.push_back(std::make_shared<Koopa>(pos)); break;
+            case 'P': outEnemies.push_back(std::make_shared<PiranhaPlant>(pos)); break;
+
+            default: break;
             }
         }
         row++;

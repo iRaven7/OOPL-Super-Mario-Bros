@@ -1,4 +1,5 @@
 #include "Character.hpp"
+#include "Constants.hpp"
 #include "Util/Image.hpp"
 #include <algorithm>
 #include <cmath>
@@ -14,12 +15,12 @@ void Character::SetImage(const std::string& ImagePath) {
 
 glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
     // 1. 計算水平與垂直加速度
-    float currentAccel = isSprinting ? SPRINT_ACCEL : WALK_ACCEL;
-    float maxSpeed = isSprinting ? MAX_SPRINT_SPEED : MAX_WALK_SPEED;
+    float currentAccel = isSprinting ? PhysicsConstants::SPRINT_ACCEL : PhysicsConstants::WALK_ACCEL;
+    float maxSpeed = isSprinting ? PhysicsConstants::MAX_SPRINT_SPEED : PhysicsConstants::MAX_WALK_SPEED;
 
     if (inputDirection != 0.0f) {
         if (m_Velocity.x != 0.0f && std::signbit(m_Velocity.x) != std::signbit(inputDirection)) {
-            m_Velocity.x += inputDirection * SKID_DECEL * deltaTime;
+            m_Velocity.x += inputDirection * PhysicsConstants::SKID_DECEL * deltaTime;
         }
         else {
             m_Velocity.x += inputDirection * currentAccel * deltaTime;
@@ -28,21 +29,21 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
     }
     else {
         if (m_Velocity.x > 0.0f) {
-            m_Velocity.x = std::max(0.0f, m_Velocity.x - FRICTION * deltaTime);
+            m_Velocity.x = std::max(0.0f, m_Velocity.x - PhysicsConstants::FRICTION * deltaTime);
         }
         else if (m_Velocity.x < 0.0f) {
-            m_Velocity.x = std::min(0.0f, m_Velocity.x + FRICTION * deltaTime);
+            m_Velocity.x = std::min(0.0f, m_Velocity.x + PhysicsConstants::FRICTION * deltaTime);
         }
     }
 
     if (m_IsGrounded && wantsJump) {
-        m_Velocity.y = JUMP_FORCE;
+        m_Velocity.y = PhysicsConstants::JUMP_FORCE;
         m_IsGrounded = false;
     }
 
     // 移除 if (!m_IsGrounded) 的條件判斷，使重力成為全域常態作用力
-    m_Velocity.y += GRAVITY * deltaTime;
-    m_Velocity.y = std::max(m_Velocity.y, MAX_FALL_SPEED);
+    m_Velocity.y += PhysicsConstants::GRAVITY * deltaTime;
+    m_Velocity.y = std::max(m_Velocity.y, PhysicsConstants::MAX_FALL_SPEED);
 
     glm::vec2 currentPos = GetPosition();
     glm::vec2 mySize = GetSize();
