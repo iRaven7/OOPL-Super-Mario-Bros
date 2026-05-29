@@ -1,6 +1,7 @@
 #include "Character.hpp"
 #include "Constants.hpp"
 #include "Util/Image.hpp"
+#include "Block.hpp"
 #include <algorithm>
 #include <cmath>
 

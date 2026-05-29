@@ -1,7 +1,6 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include "Util/Text.hpp"
 #include "Util/Color.hpp"
 #include "Util/GameObject.hpp"
 #include "pch.hpp" // IWYU pragma: export
@@ -33,6 +32,13 @@ public:
 
 private:
     void UpdateCamera();
+
+    // 剛才拆分出來的小函式宣告
+    void UpdateUI();
+
+    template <typename T>
+    void CleanupInactiveEntities(std::vector<std::shared_ptr<T>>& entities);
+
     float m_CameraZoom = 1.0f;
 
     State m_CurrentState = State::START;
@@ -45,12 +51,15 @@ private:
     std::vector<std::shared_ptr<Enemy>> m_Enemies;
     std::shared_ptr<Mario> m_Mario;
     std::vector<std::shared_ptr<Fireball>> m_Fireballs;
+
+    // UI 元件宣告
     std::shared_ptr<Util::GameObject> m_ScoreUI;
     std::shared_ptr<Util::Text> m_ScoreText;
     std::shared_ptr<Util::GameObject> m_CoinUI;
     std::shared_ptr<Util::Text> m_CoinText;
     std::shared_ptr<Util::GameObject> m_TimeUI;
     std::shared_ptr<Util::Text> m_TimeText;
+
     int m_CurrentLevel = 0;
     float m_CameraX = 0.0f;
 };

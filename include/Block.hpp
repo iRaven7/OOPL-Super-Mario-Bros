@@ -3,11 +3,12 @@
 
 #include "Util/GameObject.hpp"
 #include "Util/Image.hpp"
+#include <glm/glm.hpp> // 明確加上這個
 #include <string>
 #include <memory>
 
 class Character;
-class Item; // 前置宣告，供 PopSpawnedItem 使用
+class Item;
 
 class Block : public Util::GameObject {
 public:
@@ -22,9 +23,6 @@ public:
         m_Drawable = std::make_shared<Util::Image>(m_ImagePath);
     }
 
-    // ==========================================
-    // 座標與算繪邏輯 (World Space vs Screen Space)
-    // ==========================================
     virtual void SetPosition(const glm::vec2& Position) {
         m_WorldPosition = Position;
         m_Transform.translation = Position;
@@ -48,14 +46,10 @@ public:
         m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
-    // ==========================================
-    // 物理與互動邏輯
-    // ==========================================
     virtual void OnHit(Character*) {
-        m_JustHit = true; // 預設記錄受擊標記
+        m_JustHit = true;
     }
 
-    // 讀取並重置受擊狀態
     bool PopJustHit() {
         bool val = m_JustHit;
         m_JustHit = false;
@@ -66,7 +60,7 @@ public:
     virtual bool IsActive() const { return true; }
     virtual std::shared_ptr<Item> PopSpawnedItem() { return nullptr; }
 
-protected: // 使用 protected 讓衍生類別 (BreakableBlock, QuestionBlock) 可直接存取
+protected:
     std::string m_ImagePath;
     glm::vec2 m_WorldPosition = { 0.0f, 0.0f };
     bool m_JustHit = false;

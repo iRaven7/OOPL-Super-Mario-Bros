@@ -3,10 +3,13 @@
 
 #include "Util/GameObject.hpp"
 #include "Util/Image.hpp"
-#include "Block.hpp"
-#include "Mario.hpp" // 需要知道瑪利歐以觸發變身
 #include <vector>
 #include <memory>
+#include <glm/glm.hpp>
+
+// 用前置宣告取代 include，大幅降低編譯負擔
+class Mario;
+class Block;
 
 class Item : public Util::GameObject {
 public:
@@ -17,7 +20,7 @@ public:
 
     virtual void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) = 0;
     virtual void OnCollect(Mario* mario) = 0;
-    virtual void OnBlockBumped(float) {}// 傳入方塊的 X 座標以判斷左右
+    virtual void OnBlockBumped(float) {}
 
     bool IsActive() const { return m_IsActive; }
     glm::vec2 GetPosition() const {

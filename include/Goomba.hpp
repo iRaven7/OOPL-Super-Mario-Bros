@@ -2,6 +2,7 @@
 #define GOOMBA_HPP
 
 #include "Enemy.hpp"
+#include "Mario.hpp"
 #include "GameStateManager.hpp"
 #include "Util/Logger.hpp"
 
