@@ -75,7 +75,9 @@ public:
     PoleSlideState(float poleX, bool isBig) : m_PoleX(poleX), m_IsBig(isBig) {}
 
     float GetPoleX() const { return m_PoleX; }  
-    glm::vec2 GetHitboxSize() const override { return { 16.0f, 16.0f }; }
+    glm::vec2 GetHitboxSize() const override {
+        return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f };
+    }
     bool CanBreakBlocks() const override { return false; }
     std::string GetIdleImage() const override {
         return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png";

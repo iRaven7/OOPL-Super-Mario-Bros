@@ -10,18 +10,17 @@ class Background : public Util::GameObject {
 public:
     explicit Background(const std::string& imagePath) {
         m_Drawable = std::make_shared<Util::Image>(imagePath);
-        // 設定成超小的負數，確保它永遠被壓在所有物件的最底層
-        SetZIndex(-100);
+        // 把深度調到 -50，確保它在所有方塊的最底層，但又不會被引擎吃掉
+        SetZIndex(1);
     }
 
     void UpdateRenderPosition(float cameraX, float cameraZoom) {
-        // 視差捲動魔法在這裡！
-        // 乘以 0.1f 代表鏡頭移動 10 像素，背景只移動 1 像素，產生深遠的距離感
-        m_Transform.translation.x = (-cameraX * 0.1f) * cameraZoom;
+        // 座標固定在 0.0f，這樣它就會像貼紙一樣黏在鏡頭上了
+        m_Transform.translation.x = 0.0f;
+        m_Transform.translation.y = 0.0f;
 
-        // 假設背景圖很大，稍微調整 Y 軸讓天空比較多
-        m_Transform.translation.y = 100.0f * cameraZoom;
-        m_Transform.scale = glm::vec2(1.0f, 1.0f) * cameraZoom;
+        // 把放大倍率直接開到 20 倍！保證把整個鏡頭塞得滿滿的啊
+        m_Transform.scale = glm::vec2(200.0f, 200.0f) * cameraZoom;
     }
 };
 
