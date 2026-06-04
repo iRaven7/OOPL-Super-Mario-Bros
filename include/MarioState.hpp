@@ -72,22 +72,29 @@ public:
 
 class PoleSlideState : public MarioState {
 public:
-    PoleSlideState(float poleX) : m_PoleX(poleX) {}
+    PoleSlideState(float poleX, bool isBig) : m_PoleX(poleX), m_IsBig(isBig) {}
 
+    float GetPoleX() const { return m_PoleX; }  
     glm::vec2 GetHitboxSize() const override { return { 16.0f, 16.0f }; }
     bool CanBreakBlocks() const override { return false; }
-    std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+    std::string GetIdleImage() const override {
+        return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png";
+    }
     std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::vector<std::string> GetRunImages() const override { return {}; }
 
-    // 這裡「只留宣告」，絕對不能把實作寫在這裡！
     void Enter(Mario* mario) override;
     void Update(Mario* mario, float deltaTime, float inputDirection, bool isSprinting, bool wantsJump) override;
+    float GetSlideSpeed() const { return m_SlideSpeed; }
+    float GetWalkSpeed() const { return m_WalkSpeed; }
+    bool IsBottomReached() const { return m_IsBottomReached; }
+    void SetBottomReached(bool val) { m_IsBottomReached = val; }
 
 private:
     float m_PoleX;
+    bool m_IsBig;
     float m_SlideSpeed = 200.0f;
     float m_WalkSpeed = 150.0f;
     bool m_IsBottomReached = false;

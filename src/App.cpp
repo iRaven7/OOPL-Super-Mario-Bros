@@ -12,6 +12,7 @@ void App::Start() {
 
     m_CameraZoom = 1.8f;
     m_Mario = std::make_shared<Mario>();
+    m_Background = std::make_shared<Background>(RESOURCE_DIR"/Blocks/sky.png");
     m_Root.AddChild(m_Mario);
 
     LoadLevel(0);
@@ -68,13 +69,24 @@ void App::LoadLevel(int level) {
         mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
     }
 
-    m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies);
+    m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies, m_Items);
 
     for (auto& block : m_CurrentMapBlocks) { m_Root.AddChild(block); }
     for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
+    for (auto& item : m_Items) { m_Root.AddChild(item); }
 
     m_CameraX = 0.0f;
     m_Mario->SetPosition({ -300.0f, 1500.0f });
+    m_Mario->SetVelocity({ 0.0f, 0.0f });
+
+    if (m_Mario->IsControlLocked()) {
+        if (m_Mario->GetSize().y > 16.0f) {
+            m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
+        }
+        else {
+            m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
+        }
+    }
 
     LOG_INFO("已載入關卡: {}", level);
 }
@@ -148,11 +160,6 @@ void App::Update() {
         m_Mario->UpdateTransformation(deltaTime);
         m_Root.Update();
         return;
-    }
-
-    // 檢查過關條件
-    if (m_Mario->GetPosition().x > 1000.0f && !stateManager.IsLevelComplete()) {
-        stateManager.SetLevelComplete(true);
     }
 
     if (stateManager.IsLevelComplete()) {
@@ -248,6 +255,10 @@ void App::Update() {
 void App::UpdateCamera() {
     float marioWorldX = m_Mario->GetPosition().x;
     float triggerX = 0.0f;
+
+    if (m_Background) {
+        m_Background->UpdateRenderPosition(m_CameraX, m_CameraZoom);
+    }
 
     if (marioWorldX > m_CameraX + triggerX) {
         m_CameraX = marioWorldX - triggerX;

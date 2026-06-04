@@ -12,6 +12,7 @@
 #include "CollisionManager.hpp"
 #include "Enemy.hpp"
 #include "Fireball.hpp"
+#include "Background.hpp"
 
 class App {
 public:
@@ -57,6 +58,7 @@ private:
     std::shared_ptr<Mario> m_Mario;
     std::vector<std::shared_ptr<Fireball>> m_Fireballs;
 
+    std::shared_ptr<Background> m_Background;
     // UI ¤¸¥ó«Å§i
     std::shared_ptr<Util::GameObject> m_ScoreUI;
     std::shared_ptr<Util::Text> m_ScoreText;

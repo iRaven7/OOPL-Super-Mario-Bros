@@ -7,10 +7,13 @@
 #include "UnbreakableBlock.hpp"
 #include "Koopa.hpp"
 #include "PiranhaPlant.hpp"
+#include "BackgroundProp.hpp"
+#include "Flag.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
-    std::vector<std::shared_ptr<Enemy>>& outEnemies) {
+    std::vector<std::shared_ptr<Enemy>>& outEnemies,
+    std::vector<std::shared_ptr<Item>>& outItems) {
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
@@ -64,6 +67,25 @@ void MapManager::LoadMap(const std::string& filePath,
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;
             case '5': outEnemies.push_back(std::make_shared<Koopa>(pos)); break;
             case 'P': outEnemies.push_back(std::make_shared<PiranhaPlant>(pos)); break;
+
+                // 旗幟
+            case 'X': {
+                // 1. 產生 9 節背景旗桿
+                for (int i = 0; i < 18; ++i) {
+                    auto pole = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_pole.png");
+                    pole->SetPosition({ pos.x, pos.y + i * 16.0f }); // 往上疊
+                    outBlocks.push_back(pole);
+                }
+                // 2. 產生頂端的圓球
+                auto top = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_top.png");
+                top->SetPosition({ pos.x, pos.y + 18 * 16.0f });
+                outBlocks.push_back(top);
+
+                // 3. 產生會動的旗幟與隱形觸發器
+                auto flag = std::make_shared<Flag>(pos);
+                outItems.push_back(flag);
+                break;
+            }
 
             default: break;
             }

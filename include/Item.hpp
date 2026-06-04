@@ -23,7 +23,7 @@ public:
     virtual void OnBlockBumped(float) {}
 
     bool IsActive() const { return m_IsActive; }
-    glm::vec2 GetPosition() const {
+    virtual glm::vec2 GetPosition() const {
         return m_WorldPosition;
     }
     void SetPosition(const glm::vec2& Position) {
@@ -36,7 +36,7 @@ public:
         m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
-    glm::vec2 GetSize() const { return { 16.0f, 16.0f }; }
+    virtual glm::vec2 GetSize() const { return { 16.0f, 16.0f }; }
 
 protected:
     std::string m_ImagePath;

@@ -6,13 +6,15 @@
 #include <memory>
 #include "Block.hpp"
 #include "Enemy.hpp" // 引入敵人介面
+#include "Item.hpp"
 
 class MapManager {
 public:
     // 改為透過參考傳遞，使地圖管理器能同時實例化不同類型的實體
     void LoadMap(const std::string& filePath,
         std::vector<std::shared_ptr<Block>>& outBlocks,
-        std::vector<std::shared_ptr<Enemy>>& outEnemies);
+        std::vector<std::shared_ptr<Enemy>>& outEnemies,
+        std::vector<std::shared_ptr<Item>>& outItems);
 
 private:
     const float BLOCK_SIZE = 16.0f;
