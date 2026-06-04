@@ -11,13 +11,9 @@ void App::Start() {
     LOG_TRACE("Start");
 
     m_CameraZoom = 1.8f;
+    m_CurrentState = State::UPDATE;
+
     m_Mario = std::make_shared<Mario>();
-    m_Background = std::make_shared<Background>(RESOURCE_DIR"/Blocks/sky.png");
-    m_Root.AddChild(m_Mario);
-
-    LoadLevel(0);
-
-    m_Mario->ChangeState(std::make_unique<BigMarioState>());
 
     // 建立分數 UI
     m_ScoreUI = std::make_shared<Util::GameObject>();
@@ -43,12 +39,17 @@ void App::Start() {
     m_TimeUI->m_Transform.translation = { 300.0f, 250.0f };
     m_Root.AddChild(m_TimeUI);
 
-    m_CurrentState = State::UPDATE;
+    // 第一次載入關卡 (這會自動把瑪利歐跟背景加進去)
+    LoadLevel(0);
+
+    // 測試用：讓瑪利歐一開始就是大隻的
+    m_Mario->ChangeState(std::make_unique<BigMarioState>());
 }
 
 void App::LoadLevel(int level) {
     m_CurrentLevel = level;
 
+    // 先把舊地圖的垃圾通通掃掉
     for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
     m_CurrentMapBlocks.clear();
 
@@ -61,6 +62,15 @@ void App::LoadLevel(int level) {
     for (auto& fb : m_Fireballs) { m_Root.RemoveChild(fb); }
     m_Fireballs.clear();
 
+    if (m_Background) { m_Root.RemoveChild(m_Background); }
+    m_Root.RemoveChild(m_Mario);
+
+    // 然後換上新的藍天背景，並把瑪利歐放回畫面
+    m_Background = std::make_shared<Background>(RESOURCE_DIR"/Blocks/sky.png");
+    m_Root.AddChild(m_Background);
+    m_Root.AddChild(m_Mario);
+
+    // 再來讀取新地圖
     std::string mapPath;
     if (level == 0) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
@@ -71,14 +81,17 @@ void App::LoadLevel(int level) {
 
     m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies, m_Items);
 
+    // 把地圖物件加進渲染樹 (這段迴圈絕對不能重複出現喔！)
     for (auto& block : m_CurrentMapBlocks) { m_Root.AddChild(block); }
     for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
     for (auto& item : m_Items) { m_Root.AddChild(item); }
 
+    // 把攝影機跟瑪利歐歸位
     m_CameraX = 0.0f;
     m_Mario->SetPosition({ -300.0f, 1500.0f });
     m_Mario->SetVelocity({ 0.0f, 0.0f });
 
+    // 如果瑪利歐還在滑旗桿的狀態，幫他解除封印
     if (m_Mario->IsControlLocked()) {
         if (m_Mario->GetSize().y > 16.0f) {
             m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
