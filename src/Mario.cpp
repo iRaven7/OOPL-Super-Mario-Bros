@@ -135,7 +135,7 @@ void Mario::TakeDamage() {
         Die();
     }
     else {
-        ChangeState(std::make_unique<SmallMarioState>(), false);
+        ChangeState(std::make_unique<SmallMarioState>(), true);
         m_InvincibleTimer = 2.0f;
     }
 }

@@ -110,11 +110,38 @@ void App::CleanupInactiveEntities(std::vector<std::shared_ptr<T>>& entities) {
 }
 
 void App::Update() {
-    // 1. 計算時間差與防禦性限制
     float deltaTime = static_cast<float>(Util::Time::GetDeltaTimeMs()) / 1000.0f;
     if (deltaTime > 0.05f) deltaTime = 0.05f;
 
     auto& stateManager = GameStateManager::GetInstance();
+
+    // 🌟 升級版：過場狀態攔截 (同時處理過關與死亡)
+    if (m_IsTransitioning) {
+        m_LevelTransitionTimer -= deltaTime;
+        if (m_LevelTransitionTimer <= 0.0f) {
+            m_IsTransitioning = false;
+
+            if (m_IsDeadTransition) {
+                // 死亡重來：砍掉原本的瑪利歐，生一個新的，並重新載入本關
+                m_IsDeadTransition = false;
+                m_Root.RemoveChild(m_Mario);
+                m_Mario = std::make_shared<Mario>();
+                m_Root.AddChild(m_Mario);
+                LoadLevel(m_CurrentLevel);
+            }
+            else {
+                // 正常過關：載入下一關
+                LoadLevel(m_CurrentLevel + 1);
+            }
+        }
+
+        // 過場期間只更新畫面，達成時間暫停效果
+        UpdateUI();
+        UpdateCamera();
+        m_Root.Update();
+        return;
+    }
+
     stateManager.UpdateTime(deltaTime);
 
     if (m_Mario->IsTransforming()) {
@@ -123,14 +150,20 @@ void App::Update() {
         return;
     }
 
-    // 2. 檢查過關條件
-    if (m_Mario->GetPosition().x > 500.0f && !stateManager.IsLevelComplete()) {
+    // 檢查過關條件
+    if (m_Mario->GetPosition().x > 1000.0f && !stateManager.IsLevelComplete()) {
         stateManager.SetLevelComplete(true);
     }
 
     if (stateManager.IsLevelComplete()) {
-        LoadLevel(m_CurrentLevel + 1);
+        TriggerLevelTransition();
         stateManager.SetLevelComplete(false);
+        return;
+    }
+
+    // 🌟 檢查死亡條件
+    if (m_Mario->IsDead()) {
+        TriggerDeath();
         return;
     }
 
@@ -244,6 +277,19 @@ void App::UpdateCamera() {
     for (auto& fb : m_Fireballs) {
         if (fb->IsActive()) fb->UpdateRenderPosition(m_CameraX, m_CameraZoom);
     }
+}
+
+void App::TriggerDeath() {
+    m_IsTransitioning = true;
+    m_IsDeadTransition = true;
+    m_LevelTransitionTimer = 2.0f; // 死亡時畫面凍結兩秒
+}
+
+void App::TriggerLevelTransition() {
+    m_IsTransitioning = true;
+    m_LevelTransitionTimer = 2.0f; // 讓畫面停住 2 秒鐘
+
+    // 以後如果你想加過關音樂，或是讓瑪利歐播個勝利動畫，都可以寫在這裡喔！
 }
 
 void App::End() {

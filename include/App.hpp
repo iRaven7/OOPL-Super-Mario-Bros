@@ -35,6 +35,11 @@ private:
 
     // 剛才拆分出來的小函式宣告
     void UpdateUI();
+    void TriggerLevelTransition();       // 觸發過場的函式
+    void TriggerDeath();
+    bool m_IsTransitioning = false;      // 記錄是不是正在過場
+    bool m_IsDeadTransition = false;
+    float m_LevelTransitionTimer = 0.0f; // 過場倒數計時器
 
     template <typename T>
     void CleanupInactiveEntities(std::vector<std::shared_ptr<T>>& entities);
