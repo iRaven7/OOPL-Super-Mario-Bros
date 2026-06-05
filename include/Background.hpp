@@ -14,13 +14,14 @@ public:
     }
 
     void UpdateRenderPosition(float cameraX, float cameraZoom) {
-        m_Transform.translation.x = cameraX * cameraZoom;
+        m_Transform.translation.x = 0.0f;
+        m_Transform.translation.y = 0.0f;
 
         // Y 座標稍微往下壓一點，確保能填滿螢幕
         m_Transform.translation.y = -200.0f * cameraZoom;
 
         // 放大個 5 倍通常就很夠塞滿畫面了
-        m_Transform.scale = glm::vec2(100.0f, 100.0f) * cameraZoom;
+        m_Transform.scale = glm::vec2(1000.0f, 1000.0f) * cameraZoom;
     }
 };
 

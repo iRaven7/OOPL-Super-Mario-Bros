@@ -94,6 +94,37 @@ public:
     bool IsBottomReached() const { return m_IsBottomReached; }
     void SetBottomReached(bool val) { m_IsBottomReached = val; }
 
+    class PipeSlideState : public MarioState {
+    public:
+        PipeSlideState(bool isBig, float targetY, int targetLevel)
+            : m_IsBig(isBig), m_TargetY(targetY), m_TargetLevel(targetLevel) {
+        }
+
+        glm::vec2 GetHitboxSize() const override {
+            return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f };
+        }
+        bool CanBreakBlocks() const override { return false; }
+
+        std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+        std::string GetCrouchImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+        std::string GetJumpImage() const override { return GetIdleImage(); }
+        std::string GetSkidImage() const override { return GetIdleImage(); }
+        std::vector<std::string> GetRunImages() const override { return { GetIdleImage() }; }
+
+        void Enter(Mario* mario) override;
+
+        float GetTargetY() const { return m_TargetY; }
+        float GetSlideSpeed() const { return 50.0f; }
+        bool IsDownReached() const { return m_IsDownReached; }
+        void SetDownReached(bool val) { m_IsDownReached = val; }
+        int GetTargetLevel() const { return m_TargetLevel; }
+
+    private:
+        bool m_IsBig;
+        float m_TargetY;
+        int m_TargetLevel;
+        bool m_IsDownReached = false;
+    };
 private:
     float m_PoleX;
     bool m_IsBig;

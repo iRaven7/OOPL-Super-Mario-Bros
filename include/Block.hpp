@@ -59,6 +59,8 @@ public:
     virtual void Update(float) {}
     virtual bool IsActive() const { return true; }
     virtual std::shared_ptr<Item> PopSpawnedItem() { return nullptr; }
+    virtual bool IsPipeEntrance() const { return false; }
+    virtual int GetTargetLevel() const { return -1; }
 
 protected:
     std::string m_ImagePath;

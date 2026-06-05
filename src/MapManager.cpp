@@ -9,6 +9,7 @@
 #include "PiranhaPlant.hpp"
 #include "BackgroundProp.hpp"
 #include "Flag.hpp"
+#include "EnterablePipe.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -62,6 +63,8 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'p': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
             case 'k': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
             case 'l': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
+
+            case 'E': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
 
                 // 敵人系列 (敵人不需要設定 ZIndex，直接丟進陣列)
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;

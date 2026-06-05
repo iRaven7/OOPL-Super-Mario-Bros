@@ -9,7 +9,8 @@ Mario::Mario() : Character(RESOURCE_DIR"/Entities/LittleMario/mario.png") {
 }
 
 bool Mario::IsControlLocked() const {
-    return dynamic_cast<PoleSlideState*>(m_State.get()) != nullptr;
+    return dynamic_cast<PoleSlideState*>(m_State.get()) != nullptr ||
+        dynamic_cast<PipeSlideState*>(m_State.get()) != nullptr;
 }
 
 void Mario::ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause) {
@@ -213,6 +214,22 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
                 GameStateManager::GetInstance().SetLevelComplete(true);
             }
             return res;
+        }
+
+        if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
+            if (!pipeState->IsDownReached()) {
+                m_Velocity.x = 0.0f;
+                m_Velocity.y = -pipeState->GetSlideSpeed();
+
+                auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
+                m_Velocity.y = -pipeState->GetSlideSpeed();
+
+                if (GetPosition().y <= pipeState->GetTargetY()) {
+                    pipeState->SetDownReached(true);
+                }
+                return res;
+            }
+            return { 0.0f, 0.0f }; // 到底了就卡住不動等過場
         }
     }
 

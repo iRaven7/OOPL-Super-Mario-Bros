@@ -15,7 +15,7 @@ public:
     Mario();
 
     void ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause = true);
-
+    MarioState* GetState() const { return m_State.get(); }
     [[nodiscard]] bool IsInvincible() const { return m_InvincibleTimer > 0.0f; }
     [[nodiscard]] bool CanBreakBlocks() const override;
     [[nodiscard]] bool IsControlLocked() const;
