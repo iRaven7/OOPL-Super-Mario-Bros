@@ -268,4 +268,9 @@ void PoleSlideState::Update(Mario* mario, float deltaTime, float inputDirection,
             GameStateManager::GetInstance().SetLevelComplete(true);
         }
     }
+void PipeSlideState::Enter(Mario * mario) {
+    mario->SetVelocity({ 0.0f, 0.0f });
+    mario->SetZIndex(5); // 躲到水管(10)的後面！
+}
+
 }

@@ -187,6 +187,36 @@ void App::Update() {
         return;
     }
 
+    // 檢查鑽水管邏輯
+    if (wantsCrouch && m_Mario->IsGrounded() && !m_Mario->IsControlLocked()) {
+        auto marioPos = m_Mario->GetPosition();
+        auto marioSize = m_Mario->GetSize();
+
+        for (auto& block : m_CurrentMapBlocks) {
+            if (block->IsPipeEntrance()) {
+                auto blockPos = block->GetPosition();
+
+                // 算一下瑪利歐是不是剛好站在這根水管的上面
+                if (std::abs(marioPos.x - (blockPos.x + 16.0f)) < 20.0f &&
+                    std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 16.0f)) < 8.0f) {
+
+                    int target = block->GetTargetLevel();
+                    // 讓瑪利歐往下鑽 64 像素 (剛好是兩格水管深)
+                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target), false);
+                    m_Mario->SetPosition({ blockPos.x + 16.0f, marioPos.y }); // 自動幫瑪利歐對齊水管正中央
+                    break;
+                }
+            }
+        }
+    }
+
+    // 檢查是不是鑽到底了，準備換地圖
+    if (auto pipeState = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
+        if (pipeState->IsDownReached()) {
+            LoadLevel(pipeState->GetTargetLevel());
+        }
+    }
+
     // 3. 擷取輸入
     float inputDirection = 0.0f;
     if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
