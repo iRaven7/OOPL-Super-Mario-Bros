@@ -66,11 +66,11 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
 
     if (IsControlLocked()) {
         auto poleState = dynamic_cast<PoleSlideState*>(m_State.get());
-        if (!poleState->IsBottomReached()) {
+        if (poleState && !poleState->IsBottomReached()) {
             SetImage(m_State->GetIdleImage());
             m_Transform.scale.x = 1.0f;
         }
-        else {
+        else if (poleState) {
             m_Transform.scale.x = 1.0f;
             float animSpeed = std::abs(m_Velocity.x) / 150.0f;
             m_AnimTimer += deltaTime * animSpeed;
@@ -188,89 +188,60 @@ void Mario::Die() {
 }
 
 glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
+    // 檢查旗桿邏輯
     if (auto poleState = dynamic_cast<PoleSlideState*>(m_State.get())) {
         if (!poleState->IsBottomReached()) {
-            // 滑行中：抵銷玩家輸入與正常重力
             m_Velocity.x = 0.0f;
             m_Velocity.y = -poleState->GetSlideSpeed();
 
-            // 呼叫父類別進行基本的環境碰撞偵測
             auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
-            m_Velocity.y = -poleState->GetSlideSpeed(); // 再次抵銷 UpdatePhysics 裡面加上的重力
+            m_Velocity.y = -poleState->GetSlideSpeed();
 
             if (m_IsGrounded) {
                 poleState->SetBottomReached(true);
-                SetPosition({ GetPosition().x + 20.0f, GetPosition().y }); // 到底後從旗桿左邊切換到右邊
+                SetPosition({ GetPosition().x + 20.0f, GetPosition().y });
             }
             return res;
         }
         else {
-            // 已經到底，強制輸入向右走
             auto res = Character::UpdatePhysics(deltaTime, 1.0f, false, false, blocks);
             m_Velocity.x = poleState->GetWalkSpeed();
 
-            // 走滿 300 距離後真正觸發過關
             if (GetPosition().x > poleState->GetPoleX() + 300.0f) {
                 GameStateManager::GetInstance().SetLevelComplete(true);
             }
             return res;
         }
+    } // 這裡大括號要正確關閉！
 
-        if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
-            if (!pipeState->IsDownReached()) {
-                m_Velocity.x = 0.0f;
-                m_Velocity.y = -pipeState->GetSlideSpeed();
+    // 檢查水管邏輯 (不要包在旗桿裡面)
+    if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
+        if (!pipeState->IsDownReached()) {
+            m_Velocity.x = 0.0f;
+            m_Velocity.y = -pipeState->GetSlideSpeed();
 
-                auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
-                m_Velocity.y = -pipeState->GetSlideSpeed();
+            auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
+            m_Velocity.y = -pipeState->GetSlideSpeed();
 
-                if (GetPosition().y <= pipeState->GetTargetY()) {
-                    pipeState->SetDownReached(true);
-                }
-                return res;
+            if (GetPosition().y <= pipeState->GetTargetY()) {
+                pipeState->SetDownReached(true);
             }
-            return { 0.0f, 0.0f }; // 到底了就卡住不動等過場
+            return res;
         }
+        return { 0.0f, 0.0f };
     }
 
     // 正常狀態
     return Character::UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, blocks);
 }
 
-// ==========================================
-// 實作滑旗桿的邏輯
-// ==========================================
 void PoleSlideState::Enter(Mario* mario) {
     auto pos = mario->GetPosition();
     mario->SetPosition({ m_PoleX, pos.y });
     mario->SetVelocity({ 0.0f, 0.0f });
 }
 
-void PoleSlideState::Update(Mario* mario, float deltaTime, float inputDirection, bool isSprinting, bool wantsJump) {
-    if (!m_IsBottomReached) {
-        auto pos = mario->GetPosition();
-        pos.y -= m_SlideSpeed * deltaTime;
-        mario->SetPosition(pos);
-
-        if (mario->IsGrounded()) {
-            m_IsBottomReached = true;
-            mario->SetPosition({ pos.x + 30.0f, pos.y });
-        }
-    }
-    else {
-        auto pos = mario->GetPosition();
-        pos.x += m_WalkSpeed * deltaTime;
-        mario->SetPosition(pos);
-
-        mario->UpdateAnimation(deltaTime, 1.0f);
-
-        if (pos.x > m_PoleX + 300.0f) {
-            GameStateManager::GetInstance().SetLevelComplete(true);
-        }
-    }
-void PipeSlideState::Enter(Mario * mario) {
+void PipeSlideState::Enter(Mario* mario) {
     mario->SetVelocity({ 0.0f, 0.0f });
-    mario->SetZIndex(5); // 躲到水管(10)的後面！
-}
-
+    mario->SetZIndex(5);
 }

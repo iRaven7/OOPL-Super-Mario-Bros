@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-// 絕對不能漏掉這行前置宣告！
 class Mario;
 
 class MarioState {
@@ -22,9 +21,7 @@ public:
     virtual std::string GetCrouchImage() const = 0;
     virtual std::vector<std::string> GetRunImages() const = 0;
 
-    // 加上這兩個虛擬函式，並把變數名稱註解掉來消除警告
     virtual void Enter(Mario* /*mario*/) {}
-    virtual void Update(Mario* /*mario*/, float /*deltaTime*/, float /*inputDirection*/, bool /*isSprinting*/, bool /*wantsJump*/) {}
 };
 
 class SmallMarioState : public MarioState {
@@ -74,63 +71,57 @@ class PoleSlideState : public MarioState {
 public:
     PoleSlideState(float poleX, bool isBig) : m_PoleX(poleX), m_IsBig(isBig) {}
 
-    float GetPoleX() const { return m_PoleX; }  
-    glm::vec2 GetHitboxSize() const override {
-        return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f };
-    }
+    float GetPoleX() const { return m_PoleX; }
+    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
     bool CanBreakBlocks() const override { return false; }
-    std::string GetIdleImage() const override {
-        return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png";
-    }
+    std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::vector<std::string> GetRunImages() const override { return {}; }
 
     void Enter(Mario* mario) override;
-    void Update(Mario* mario, float deltaTime, float inputDirection, bool isSprinting, bool wantsJump) override;
     float GetSlideSpeed() const { return m_SlideSpeed; }
     float GetWalkSpeed() const { return m_WalkSpeed; }
     bool IsBottomReached() const { return m_IsBottomReached; }
     void SetBottomReached(bool val) { m_IsBottomReached = val; }
 
-    class PipeSlideState : public MarioState {
-    public:
-        PipeSlideState(bool isBig, float targetY, int targetLevel)
-            : m_IsBig(isBig), m_TargetY(targetY), m_TargetLevel(targetLevel) {
-        }
-
-        glm::vec2 GetHitboxSize() const override {
-            return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f };
-        }
-        bool CanBreakBlocks() const override { return false; }
-
-        std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
-        std::string GetCrouchImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
-        std::string GetJumpImage() const override { return GetIdleImage(); }
-        std::string GetSkidImage() const override { return GetIdleImage(); }
-        std::vector<std::string> GetRunImages() const override { return { GetIdleImage() }; }
-
-        void Enter(Mario* mario) override;
-
-        float GetTargetY() const { return m_TargetY; }
-        float GetSlideSpeed() const { return 50.0f; }
-        bool IsDownReached() const { return m_IsDownReached; }
-        void SetDownReached(bool val) { m_IsDownReached = val; }
-        int GetTargetLevel() const { return m_TargetLevel; }
-
-    private:
-        bool m_IsBig;
-        float m_TargetY;
-        int m_TargetLevel;
-        bool m_IsDownReached = false;
-    };
 private:
     float m_PoleX;
     bool m_IsBig;
     float m_SlideSpeed = 200.0f;
     float m_WalkSpeed = 150.0f;
     bool m_IsBottomReached = false;
+};
+
+class PipeSlideState : public MarioState {
+public:
+    PipeSlideState(bool isBig, float targetY, int targetLevel)
+        : m_IsBig(isBig), m_TargetY(targetY), m_TargetLevel(targetLevel) {
+    }
+
+    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
+    bool CanBreakBlocks() const override { return false; }
+
+    std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+    std::string GetCrouchImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
+    std::string GetJumpImage() const override { return GetIdleImage(); }
+    std::string GetSkidImage() const override { return GetIdleImage(); }
+    std::vector<std::string> GetRunImages() const override { return { GetIdleImage() }; }
+
+    void Enter(Mario* mario) override;
+
+    float GetTargetY() const { return m_TargetY; }
+    float GetSlideSpeed() const { return 50.0f; }
+    bool IsDownReached() const { return m_IsDownReached; }
+    void SetDownReached(bool val) { m_IsDownReached = val; }
+    int GetTargetLevel() const { return m_TargetLevel; }
+
+private:
+    bool m_IsBig;
+    float m_TargetY;
+    int m_TargetLevel;
+    bool m_IsDownReached = false;
 };
 
 #endif // MARIO_STATE_HPP

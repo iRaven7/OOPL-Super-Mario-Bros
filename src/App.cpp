@@ -4,6 +4,7 @@
 #include "Util/Logger.hpp"
 #include "Util/Time.hpp"
 #include "GameStateManager.hpp"
+#include "MarioState.hpp"
 #include <iomanip>
 #include <sstream>
 
@@ -15,7 +16,6 @@ void App::Start() {
 
     m_Mario = std::make_shared<Mario>();
 
-    // 建立分數 UI
     m_ScoreUI = std::make_shared<Util::GameObject>();
     m_ScoreText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "SCORE: 000000", Util::Color{ 255, 255, 255, 255 });
     m_ScoreUI->SetDrawable(m_ScoreText);
@@ -23,7 +23,6 @@ void App::Start() {
     m_ScoreUI->m_Transform.translation = { -300.0f, 250.0f };
     m_Root.AddChild(m_ScoreUI);
 
-    // 建立金幣 UI
     m_CoinUI = std::make_shared<Util::GameObject>();
     m_CoinText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "COINS: 00", Util::Color{ 255, 255, 255, 255 });
     m_CoinUI->SetDrawable(m_CoinText);
@@ -31,7 +30,6 @@ void App::Start() {
     m_CoinUI->m_Transform.translation = { 0.0f, 250.0f };
     m_Root.AddChild(m_CoinUI);
 
-    // 建立時間 UI
     m_TimeUI = std::make_shared<Util::GameObject>();
     m_TimeText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "TIME: 400", Util::Color{ 255, 255, 255, 255 });
     m_TimeUI->SetDrawable(m_TimeText);
@@ -39,17 +37,13 @@ void App::Start() {
     m_TimeUI->m_Transform.translation = { 300.0f, 250.0f };
     m_Root.AddChild(m_TimeUI);
 
-    // 第一次載入關卡 (這會自動把瑪利歐跟背景加進去)
     LoadLevel(0);
-
-    // 測試用：讓瑪利歐一開始就是大隻的
     m_Mario->ChangeState(std::make_unique<BigMarioState>());
 }
 
 void App::LoadLevel(int level) {
     m_CurrentLevel = level;
 
-    // 先把舊地圖的垃圾通通掃掉
     for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
     m_CurrentMapBlocks.clear();
 
@@ -65,12 +59,10 @@ void App::LoadLevel(int level) {
     if (m_Background) { m_Root.RemoveChild(m_Background); }
     m_Root.RemoveChild(m_Mario);
 
-    // 然後換上新的藍天背景，並把瑪利歐放回畫面
     m_Background = std::make_shared<Background>(RESOURCE_DIR"/Blocks/sky.png");
     m_Root.AddChild(m_Background);
     m_Root.AddChild(m_Mario);
 
-    // 再來讀取新地圖
     std::string mapPath;
     if (level == 0) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
@@ -81,17 +73,15 @@ void App::LoadLevel(int level) {
 
     m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies, m_Items);
 
-    // 把地圖物件加進渲染樹 (這段迴圈絕對不能重複出現喔！)
     for (auto& block : m_CurrentMapBlocks) { m_Root.AddChild(block); }
     for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
     for (auto& item : m_Items) { m_Root.AddChild(item); }
 
-    // 把攝影機跟瑪利歐歸位
     m_CameraX = 0.0f;
     m_Mario->SetPosition({ -300.0f, 1500.0f });
     m_Mario->SetVelocity({ 0.0f, 0.0f });
+    m_Mario->SetZIndex(50);
 
-    // 如果瑪利歐還在滑旗桿的狀態，幫他解除封印
     if (m_Mario->IsControlLocked()) {
         if (m_Mario->GetSize().y > 16.0f) {
             m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
@@ -104,7 +94,6 @@ void App::LoadLevel(int level) {
     LOG_INFO("已載入關卡: {}", level);
 }
 
-// 整理：將原本 Update 裡的一大堆程式碼獨立拆分出來
 void App::UpdateUI() {
     auto& stateManager = GameStateManager::GetInstance();
 
@@ -140,14 +129,11 @@ void App::Update() {
 
     auto& stateManager = GameStateManager::GetInstance();
 
-    // 🌟 升級版：過場狀態攔截 (同時處理過關與死亡)
     if (m_IsTransitioning) {
         m_LevelTransitionTimer -= deltaTime;
         if (m_LevelTransitionTimer <= 0.0f) {
             m_IsTransitioning = false;
-
             if (m_IsDeadTransition) {
-                // 死亡重來：砍掉原本的瑪利歐，生一個新的，並重新載入本關
                 m_IsDeadTransition = false;
                 m_Root.RemoveChild(m_Mario);
                 m_Mario = std::make_shared<Mario>();
@@ -155,12 +141,9 @@ void App::Update() {
                 LoadLevel(m_CurrentLevel);
             }
             else {
-                // 正常過關：載入下一關
                 LoadLevel(m_CurrentLevel + 1);
             }
         }
-
-        // 過場期間只更新畫面，達成時間暫停效果
         UpdateUI();
         UpdateCamera();
         m_Root.Update();
@@ -181,10 +164,23 @@ void App::Update() {
         return;
     }
 
-    // 🌟 檢查死亡條件
     if (m_Mario->IsDead()) {
         TriggerDeath();
         return;
+    }
+
+    // 🌟 先把按鍵讀取拉到上面，這樣程式就認識 wantsCrouch 了！
+    float inputDirection = 0.0f;
+    if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
+    else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) inputDirection = -1.0f;
+
+    bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
+    bool wantsJump = Util::Input::IsKeyDown(Util::Keycode::SPACE);
+    bool wantsCrouch = Util::Input::IsKeyPressed(Util::Keycode::DOWN);
+    bool wantsFire = Util::Input::IsKeyDown(Util::Keycode::X);
+
+    if (m_Mario->IsCrouching() && m_Mario->IsGrounded()) {
+        inputDirection = 0.0f;
     }
 
     // 檢查鑽水管邏輯
@@ -196,53 +192,33 @@ void App::Update() {
             if (block->IsPipeEntrance()) {
                 auto blockPos = block->GetPosition();
 
-                // 算一下瑪利歐是不是剛好站在這根水管的上面
                 if (std::abs(marioPos.x - (blockPos.x + 16.0f)) < 20.0f &&
                     std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 16.0f)) < 8.0f) {
 
                     int target = block->GetTargetLevel();
-                    // 讓瑪利歐往下鑽 64 像素 (剛好是兩格水管深)
                     m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target), false);
-                    m_Mario->SetPosition({ blockPos.x + 16.0f, marioPos.y }); // 自動幫瑪利歐對齊水管正中央
+                    m_Mario->SetPosition({ blockPos.x + 16.0f, marioPos.y });
                     break;
                 }
             }
         }
     }
 
-    // 檢查是不是鑽到底了，準備換地圖
+    // 檢查是不是鑽到底了
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
         if (pipeState->IsDownReached()) {
             LoadLevel(pipeState->GetTargetLevel());
         }
     }
 
-    // 3. 擷取輸入
-    float inputDirection = 0.0f;
-    if (Util::Input::IsKeyPressed(Util::Keycode::RIGHT)) inputDirection = 1.0f;
-    else if (Util::Input::IsKeyPressed(Util::Keycode::LEFT)) inputDirection = -1.0f;
-
-    if (m_Mario->IsCrouching() && m_Mario->IsGrounded()) {
-        inputDirection = 0.0f;
-    }
-
-    bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
-    bool wantsJump = Util::Input::IsKeyDown(Util::Keycode::SPACE);
-    bool wantsCrouch = Util::Input::IsKeyPressed(Util::Keycode::DOWN);
-    bool wantsFire = Util::Input::IsKeyDown(Util::Keycode::X);
-
-    // 4. 更新 UI
     UpdateUI();
 
-    // 5. 更新所有實體的邏輯與物理
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
     m_Mario->SetCrouching(wantsCrouch);
 
-    if (wantsFire) {
-        m_Mario->Shoot();
-    }
+    if (wantsFire) m_Mario->Shoot();
 
     auto newFireballs = m_Mario->PopSpawnedFireballs();
     for (auto& fb : newFireballs) {
@@ -270,23 +246,14 @@ void App::Update() {
         if (enemy->IsActive()) enemy->UpdateAI(deltaTime, m_CurrentMapBlocks);
     }
 
-    // 6. 處理實體間的互動邏輯 (只呼叫一次就好！)
     m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies, m_Fireballs);
 
-    // 7. 清理已死亡或失去活性的物件
     CleanupInactiveEntities(m_Fireballs);
     CleanupInactiveEntities(m_Items);
-    // 如果敵人有銷毀邏輯，這裡也可以加 CleanupInactiveEntities(m_Enemies);
 
-    // 8. 更新攝影機與渲染
     UpdateCamera();
     m_Root.Update();
 
-    // 除錯日誌
-    LOG_DEBUG("Mario X: {:.2f}, Y: {:.2f}, IsGrounded: {}",
-        m_Mario->GetPosition().x, m_Mario->GetPosition().y, m_Mario->IsGrounded());
-
-    // 9. 關卡控制與程式退出
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_1)) LoadLevel(1);
 
@@ -300,7 +267,8 @@ void App::UpdateCamera() {
     float triggerX = 0.0f;
 
     if (m_Background) {
-        m_Background->UpdateRenderPosition(m_CameraX, m_CameraZoom);
+        // 背景不吃 cameraX 參數，這樣才會釘死在畫面上
+        m_Background->UpdateRenderPosition(0.0f, m_CameraZoom);
     }
 
     if (marioWorldX > m_CameraX + triggerX) {
@@ -336,14 +304,12 @@ void App::UpdateCamera() {
 void App::TriggerDeath() {
     m_IsTransitioning = true;
     m_IsDeadTransition = true;
-    m_LevelTransitionTimer = 2.0f; // 死亡時畫面凍結兩秒
+    m_LevelTransitionTimer = 2.0f;
 }
 
 void App::TriggerLevelTransition() {
     m_IsTransitioning = true;
-    m_LevelTransitionTimer = 2.0f; // 讓畫面停住 2 秒鐘
-
-    // 以後如果你想加過關音樂，或是讓瑪利歐播個勝利動畫，都可以寫在這裡喔！
+    m_LevelTransitionTimer = 2.0f;
 }
 
 void App::End() {
