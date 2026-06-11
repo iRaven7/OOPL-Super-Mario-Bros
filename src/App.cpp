@@ -292,6 +292,16 @@ void App::Update() {
 
     UpdateUI();
 
+    // Blocks (including moving platforms) update first so Mario physics
+    // snaps to their new positions this same frame — no 1-frame lag.
+    for (auto& block : m_CurrentMapBlocks) {
+        block->Update(deltaTime);
+        if (auto newItem = block->PopSpawnedItem()) {
+            m_Items.push_back(newItem);
+            m_Root.AddChild(newItem);
+        }
+    }
+
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
@@ -307,14 +317,6 @@ void App::Update() {
 
     for (auto& fb : m_Fireballs) {
         if (fb->IsActive()) fb->Update(deltaTime, m_CurrentMapBlocks);
-    }
-
-    for (auto& block : m_CurrentMapBlocks) {
-        block->Update(deltaTime);
-        if (auto newItem = block->PopSpawnedItem()) {
-            m_Items.push_back(newItem);
-            m_Root.AddChild(newItem);
-        }
     }
 
     for (auto& item : m_Items) {

@@ -15,7 +15,7 @@ void Character::SetImage(const std::string& ImagePath) {
 }
 
 glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
-    // 1. ­pºâ¤ô¥­»P««ª½¥[³t«×
+    // 1. ï¿½pï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Pï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½tï¿½ï¿½
     float currentAccel = isSprinting ? PhysicsConstants::SPRINT_ACCEL : PhysicsConstants::WALK_ACCEL;
     float maxSpeed = isSprinting ? PhysicsConstants::MAX_SPRINT_SPEED : PhysicsConstants::MAX_WALK_SPEED;
 
@@ -42,23 +42,22 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         m_IsGrounded = false;
     }
 
-    // ²¾°£ if (!m_IsGrounded) ªº±ø¥ó§PÂ_¡A¨Ï­«¤O¦¨¬°¥þ°ì±`ºA§@¥Î¤O
+    // ï¿½ï¿½ï¿½ï¿½ if (!m_IsGrounded) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Pï¿½_ï¿½Aï¿½Ï­ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`ï¿½Aï¿½@ï¿½Î¤O
     m_Velocity.y += PhysicsConstants::GRAVITY * deltaTime;
     m_Velocity.y = std::max(m_Velocity.y, PhysicsConstants::MAX_FALL_SPEED);
 
     glm::vec2 currentPos = GetPosition();
     glm::vec2 mySize = GetSize();
 
-    // 2. X ¶b¿W¥ß²¾°Ê»P¸I¼²¸ÑªR
+    // 2. X ï¿½bï¿½Wï¿½ß²ï¿½ï¿½Ê»Pï¿½Iï¿½ï¿½ï¿½ÑªR
     currentPos.x += m_Velocity.x * deltaTime;
 
-    // [·s¼W] X ¶b§P©w±M¥Î Hitbox¡G°ª«×·L½ÕÁY¤p 0.2f¡A©¿²¤¸}©³ªº¥­¦a±µÁ_
+    // [ï¿½sï¿½W] X ï¿½bï¿½Pï¿½wï¿½Mï¿½ï¿½ Hitboxï¿½Gï¿½ï¿½ï¿½×·Lï¿½ï¿½ï¿½Yï¿½p 0.2fï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½aï¿½ï¿½ï¿½_
     glm::vec2 xHitboxSize = { mySize.x, mySize.y - 0.2f };
 
     for (const auto& block : blocks) {
-        if (!block->IsActive()) continue;
+        if (!block->IsActive() || !block->IsCollidable() || !block->IsXCollidable()) continue;
 
-        // ª`·N¡G³o¸Ì§ï¥Î xHitboxSize ¶i¦æÀË¬d
         if (CheckAABB(currentPos, xHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
             if (m_Velocity.x > 0.0f) {
                 currentPos.x = block->GetCollisionPosition().x - (block->GetSize().x / 2.0f) - (mySize.x / 2.0f);
@@ -70,31 +69,31 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         }
     }
 
-    // 3. Y ¶b¿W¥ß²¾°Ê»P¸I¼²¸ÑªR
+    // 3. Y axis movement and collision
     currentPos.y += m_Velocity.y * deltaTime;
     m_IsGrounded = false;
 
-    // [·s¼W] Y ¶b§P©w±M¥Î Hitbox¡G¼e«×·L½ÕÁY¤p 0.2f¡AÁ×§K¶KÀð¤U¼Y®É³QÀð¾À±µÁ_¥d¦í
     glm::vec2 yHitboxSize = { mySize.x - 0.2f, mySize.y };
 
     for (const auto& block : blocks) {
-        if (!block->IsActive()) continue;
+        if (!block->IsActive() || !block->IsCollidable()) continue;
 
-        // ª`·N¡G³o¸Ì§ï¥Î yHitboxSize ¶i¦æÀË¬d
         if (CheckAABB(currentPos, yHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
             if (m_Velocity.y < 0.0f) {
+                // Landing on top of block â€” snap and inherit any downward platform velocity
                 currentPos.y = block->GetCollisionPosition().y + (block->GetSize().y / 2.0f) + (mySize.y / 2.0f);
                 m_IsGrounded = true;
+                m_Velocity.y = std::min(0.0f, block->GetVelocityY());
             }
             else if (m_Velocity.y > 0.0f) {
                 currentPos.y = block->GetCollisionPosition().y - (block->GetSize().y / 2.0f) - (mySize.y / 2.0f);
                 block->OnHit(this);
+                m_Velocity.y = 0.0f;
             }
-            m_Velocity.y = 0.0f;
         }
     }
 
-    // 4. §ó·s³Ì²×®y¼Ð
+    // 4. ï¿½ï¿½sï¿½Ì²×®yï¿½ï¿½
     SetPosition(currentPos);
     return m_Velocity;
 }

@@ -62,6 +62,9 @@ public:
     virtual bool IsPipeEntrance() const { return false; }
     virtual int GetTargetLevel() const { return -1; }
     virtual float GetSpawnX() const { return -300.0f; }
+    virtual float GetVelocityY() const { return 0.0f; }
+    virtual bool IsCollidable() const { return true; }
+    virtual bool IsXCollidable() const { return true; }
 
 protected:
     std::string m_ImagePath;

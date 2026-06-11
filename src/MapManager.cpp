@@ -13,6 +13,7 @@
 #include "Coin.hpp"
 #include "OneUp.hpp"
 #include "SuperStar.hpp"
+#include "MovingPlatform.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -57,14 +58,19 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'b': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor_blue.png")); break;
             case 'B': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png")); break;
 
-                // floating floor — always 5 tiles wide; put zeros in the 4 cols to the right in the map
-            case 'f': {
-                for (int i = 0; i < 7; ++i) {
-                    auto tile = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floating_floor.png");
-                    tile->SetPosition({ pos.x + i * BLOCK_SIZE, pos.y });
-                    tile->SetZIndex(10);
+                // 'f' = upward-moving platform, 'h' = downward-moving platform
+                // Place tile at col X; leave the next 6 columns as '0' in the map.
+                // Collision: one 112x16 AABB. Rendering: 7 VisualTile children.
+            case 'f':
+            case 'h': {
+                auto dir = (tileType == 'f') ? MovingPlatform::Direction::UP
+                                             : MovingPlatform::Direction::DOWN;
+                auto plat = std::make_shared<MovingPlatform>(dir);
+                plat->SetPosition(pos);
+                plat->SetZIndex(10);
+                outBlocks.push_back(plat);
+                for (auto& tile : plat->GetVisualTiles())
                     outBlocks.push_back(tile);
-                }
                 break;
             }
 

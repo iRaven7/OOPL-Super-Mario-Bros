@@ -2,6 +2,7 @@ set(SRC_FILES
     App.cpp
     MapManager.cpp
     Character.cpp
+    MovingPlatform.cpp
 )
 
 set(INCLUDE_FILES
@@ -20,6 +21,7 @@ set(INCLUDE_FILES
     PiranhaPlant.hpp
     OneUp.hpp
     SuperStar.hpp
+    MovingPlatform.hpp
 )
 
 set(TEST_FILES
