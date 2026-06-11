@@ -45,7 +45,7 @@ public:
     void Die();
     [[nodiscard]] bool IsDead() const { return m_IsDead; }
 
-    glm::vec2 UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks);
+    glm::vec2 UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks, bool isJumpHeld = true);
 
 private:
     std::unique_ptr<MarioState> m_State;

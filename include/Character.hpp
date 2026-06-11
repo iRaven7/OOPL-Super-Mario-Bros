@@ -8,7 +8,7 @@
 #include "Util/GameObject.hpp"
 
 
-// ¥Î«e¸m«Å§i¥N´À include
+// ï¿½Î«eï¿½mï¿½Å§iï¿½Nï¿½ï¿½ include
 class Block;
 
 class Character : public Util::GameObject {
@@ -20,7 +20,7 @@ public:
     Character& operator=(const Character&) = delete;
     Character& operator=(Character&&) = delete;
 
-    glm::vec2 UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks);
+    glm::vec2 UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks, bool isJumpHeld = true);
 
     [[nodiscard]] const std::string& GetImagePath() const { return m_ImagePath; }
     [[nodiscard]] bool GetVisibility() const { return m_Visible; }

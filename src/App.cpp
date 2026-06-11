@@ -137,7 +137,7 @@ void App::LoadLevel(int level, float spawnX) {
         }
     }
 
-    LOG_INFO("已載入關卡: {}", level);
+    LOG_INFO("Level loaded: {}", level);
 }
 
 void App::UpdateUI() {
@@ -254,6 +254,7 @@ void App::Update() {
 
     bool isSprinting = Util::Input::IsKeyPressed(Util::Keycode::Z);
     bool wantsJump = Util::Input::IsKeyDown(Util::Keycode::SPACE);
+    bool isJumpHeld = Util::Input::IsKeyPressed(Util::Keycode::SPACE);
     bool wantsCrouch = Util::Input::IsKeyPressed(Util::Keycode::DOWN);
     bool wantsFire = Util::Input::IsKeyDown(Util::Keycode::X);
 
@@ -304,7 +305,7 @@ void App::Update() {
 
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
-    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks);
+    m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks, isJumpHeld);
     m_Mario->SetCrouching(wantsCrouch);
 
     if (wantsFire) m_Mario->Shoot();

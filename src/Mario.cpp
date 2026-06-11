@@ -187,7 +187,7 @@ void Mario::Shoot() {
         m_SpawnedFireballs.push_back(std::make_shared<Fireball>(spawnPos, facing));
 
         m_ShootCooldown = 0.3f;
-        LOG_INFO("�o�g���y�I");
+        LOG_INFO("Fireball fired!");
     }
 }
 
@@ -218,8 +218,7 @@ void Mario::UpdateDeathAnimation(float deltaTime) {
     SetPosition(m_WorldPosition);
 }
 
-glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
-    // �ˬd�X���޿�
+glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks, bool isJumpHeld) {
     if (auto poleState = dynamic_cast<PoleSlideState*>(m_State.get())) {
         if (!poleState->IsBottomReached()) {
             m_Velocity.x = 0.0f;
@@ -243,7 +242,7 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             }
             return res;
         }
-    } // �o�̤j�A���n���T�����I
+    }
 
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
         if (!pipeState->IsDownReached()) {
@@ -259,8 +258,7 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
         return { 0.0f, 0.0f };
     }
 
-    // ���`���A
-    return Character::UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, blocks);
+    return Character::UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, blocks, isJumpHeld);
 }
 
 void PoleSlideState::Enter(Mario* mario) {

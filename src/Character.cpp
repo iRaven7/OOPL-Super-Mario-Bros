@@ -14,8 +14,7 @@ void Character::SetImage(const std::string& ImagePath) {
     m_Drawable = std::make_shared<Util::Image>(m_ImagePath);
 }
 
-glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
-    // 1. �p������P�����[�t��
+glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks, bool isJumpHeld) {
     float currentAccel = isSprinting ? PhysicsConstants::SPRINT_ACCEL : PhysicsConstants::WALK_ACCEL;
     float maxSpeed = isSprinting ? PhysicsConstants::MAX_SPRINT_SPEED : PhysicsConstants::MAX_WALK_SPEED;
 
@@ -42,17 +41,18 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         m_IsGrounded = false;
     }
 
-    // ���� if (!m_IsGrounded) ������P�_�A�ϭ��O��������`�A�@�ΤO
     m_Velocity.y += PhysicsConstants::GRAVITY * deltaTime;
+    if (!isJumpHeld && m_Velocity.y > PhysicsConstants::JUMP_CUT_SPEED) {
+        m_Velocity.y = PhysicsConstants::JUMP_CUT_SPEED;
+    }
     m_Velocity.y = std::max(m_Velocity.y, PhysicsConstants::MAX_FALL_SPEED);
 
     glm::vec2 currentPos = GetPosition();
     glm::vec2 mySize = GetSize();
 
-    // 2. X �b�W�߲��ʻP�I���ѪR
+    // X axis: shrink hitbox height by 0.2 to prevent corner-sticking
     currentPos.x += m_Velocity.x * deltaTime;
 
-    // [�s�W] X �b�P�w�M�� Hitbox�G���׷L���Y�p 0.2f�A�����}�������a���_
     glm::vec2 xHitboxSize = { mySize.x, mySize.y - 0.2f };
 
     for (const auto& block : blocks) {
@@ -69,7 +69,7 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         }
     }
 
-    // 3. Y axis movement and collision
+    // Y axis: shrink hitbox width by 0.2 to prevent corner-sticking
     currentPos.y += m_Velocity.y * deltaTime;
     m_IsGrounded = false;
 
@@ -80,7 +80,6 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
 
         if (CheckAABB(currentPos, yHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
             if (m_Velocity.y < 0.0f) {
-                // Landing on top of block — snap and inherit any downward platform velocity
                 currentPos.y = block->GetCollisionPosition().y + (block->GetSize().y / 2.0f) + (mySize.y / 2.0f);
                 m_IsGrounded = true;
                 m_Velocity.y = std::min(0.0f, block->GetVelocityY());
@@ -93,7 +92,6 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         }
     }
 
-    // 4. ��s�̲׮y��
     SetPosition(currentPos);
     return m_Velocity;
 }

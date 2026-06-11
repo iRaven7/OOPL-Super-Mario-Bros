@@ -21,7 +21,6 @@ void CollisionManager::ProcessInteractions(Mario* mario,
     std::vector<std::shared_ptr<Enemy>>& enemies,
     std::vector<std::shared_ptr<Fireball>>& fireballs) {
 
-    // ��쥻�@�j�ꪺ�{���X�ܦ��o�ˡA�@�ؤF�M�աI
     HandleItemCollection(mario, items);
     HandleEnemyEnemyCollisions(enemies);
     HandleBlockItemInteractions(blocks, items);
@@ -64,18 +63,18 @@ void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<En
                 if (aIsMovingShell && !bIsMovingShell) {
                     enemyB->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(100);
-                    LOG_INFO("�t�� (A) �����F�ĤH�I");
+                    LOG_INFO("Shell (A) killed enemy!");
                 }
                 else if (bIsMovingShell && !aIsMovingShell) {
                     enemyA->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(100);
-                    LOG_INFO("�t�� (B) �����F�ĤH�I");
+                    LOG_INFO("Shell (B) killed enemy!");
                 }
                 else if (aIsMovingShell && bIsMovingShell) {
                     enemyA->OnFireballHit();
                     enemyB->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(200);
-                    LOG_INFO("����t�ߤ��ۼ����I");
+                    LOG_INFO("Two shells collided!");
                 }
                 else {
                     auto velA = enemyA->GetVelocity();
