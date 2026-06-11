@@ -179,7 +179,7 @@ void Mario::Shoot() {
         m_SpawnedFireballs.push_back(std::make_shared<Fireball>(spawnPos, facing));
 
         m_ShootCooldown = 0.3f;
-        LOG_INFO("µo®g¤õ²y¡I");
+        LOG_INFO("ï¿½oï¿½gï¿½ï¿½ï¿½yï¿½I");
     }
 }
 
@@ -188,7 +188,7 @@ void Mario::Die() {
 }
 
 glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
-    // ÀË¬dºX±ìÅÞ¿è
+    // ï¿½Ë¬dï¿½Xï¿½ï¿½ï¿½Þ¿ï¿½
     if (auto poleState = dynamic_cast<PoleSlideState*>(m_State.get())) {
         if (!poleState->IsBottomReached()) {
             m_Velocity.x = 0.0f;
@@ -212,26 +212,23 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             }
             return res;
         }
-    } // ³o¸Ì¤j¬A¸¹­n¥¿½TÃö³¬¡I
+    } // ï¿½oï¿½Ì¤jï¿½Aï¿½ï¿½ï¿½nï¿½ï¿½ï¿½Tï¿½ï¿½ï¿½ï¿½ï¿½I
 
-    // ÀË¬d¤ôºÞÅÞ¿è (¤£­n¥]¦bºX±ì¸Ì­±)
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
         if (!pipeState->IsDownReached()) {
-            m_Velocity.x = 0.0f;
-            m_Velocity.y = -pipeState->GetSlideSpeed();
+            glm::vec2 pos = GetPosition();
+            pos.y -= pipeState->GetSlideSpeed() * deltaTime;
+            SetPosition(pos);
+            m_Velocity = { 0.0f, -pipeState->GetSlideSpeed() };
 
-            auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
-            m_Velocity.y = -pipeState->GetSlideSpeed();
-
-            if (GetPosition().y <= pipeState->GetTargetY()) {
+            if (pos.y <= pipeState->GetTargetY()) {
                 pipeState->SetDownReached(true);
             }
-            return res;
         }
         return { 0.0f, 0.0f };
     }
 
-    // ¥¿±`ª¬ºA
+    // ï¿½ï¿½ï¿½`ï¿½ï¿½ï¿½A
     return Character::UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, blocks);
 }
 

@@ -67,6 +67,9 @@ void App::LoadLevel(int level) {
     if (level == 0) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
     }
+    else if (level == 2) {
+        mapPath = RESOURCE_DIR"/Map/pipe1.txt";
+    }
     else {
         mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
     }
@@ -192,12 +195,12 @@ void App::Update() {
             if (block->IsPipeEntrance()) {
                 auto blockPos = block->GetPosition();
 
-                if (std::abs(marioPos.x - (blockPos.x + 16.0f)) < 20.0f &&
-                    std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 16.0f)) < 8.0f) {
+                if (std::abs(marioPos.x - (blockPos.x + 8.0f)) < 20.0f &&
+                    std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 8.0f)) < 8.0f) {
 
                     int target = block->GetTargetLevel();
                     m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target), false);
-                    m_Mario->SetPosition({ blockPos.x + 16.0f, marioPos.y });
+                    m_Mario->SetPosition({ blockPos.x + 8.0f, marioPos.y });
                     break;
                 }
             }
