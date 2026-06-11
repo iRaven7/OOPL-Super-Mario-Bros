@@ -14,13 +14,16 @@ public:
         m_Coins += coin;
         if (m_Coins >= 100) {
             m_Coins -= 100;
-            // 未來可在此處擴充 1-UP (加命) 邏輯
+            AddLife(1);
         }
     }
 
+    void AddLife(int count = 1) { m_Lives += count; }
+    int GetLives() const { return m_Lives; }
+
     void UpdateTime(float deltaTime) {
         if (m_TimeRemaining > 0.0f) {
-            // 原作瑪利歐的計時器比真實秒數快，可依需求調整倍率 (此處設為 2.5 倍速)
+            // 嚙踝蕭@嚙踝蕭嚙瞋嚙誹迎蕭嚙緘嚙褕橘蕭嚙踝蕭u嚙踝蕭嚙踝蕭ぃ痋A嚙箠嚙諒需求嚙調整倍嚙緞 (嚙踝蕭嚙畿嚙稽嚙踝蕭 2.5 嚙踝蕭嚙緣)
             m_TimeRemaining -= deltaTime * 2.5f;
             if (m_TimeRemaining < 0.0f) m_TimeRemaining = 0.0f;
         }
@@ -37,7 +40,8 @@ public:
     void Reset() {
         m_Score = 0;
         m_Coins = 0;
-        m_TimeRemaining = 400.0f; // 預設關卡時間
+        m_Lives = 3;
+        m_TimeRemaining = 400.0f;
         m_LevelComplete = false;
     }
 
@@ -50,6 +54,7 @@ private:
 
     int m_Score = 0;
     int m_Coins = 0;
+    int m_Lives = 3;
     float m_TimeRemaining = 400.0f;
     bool m_LevelComplete = false;
 };

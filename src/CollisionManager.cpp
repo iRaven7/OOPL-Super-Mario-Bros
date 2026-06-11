@@ -21,7 +21,7 @@ void CollisionManager::ProcessInteractions(Mario* mario,
     std::vector<std::shared_ptr<Enemy>>& enemies,
     std::vector<std::shared_ptr<Fireball>>& fireballs) {
 
-    // §â­ì¥»¤@¤j¦êªºµ{¦¡½XÅÜ¦¨³o¼Ë¡A¤@¥Ø¤FµM°Õ¡I
+    // ï¿½ï¿½ì¥»ï¿½@ï¿½jï¿½êªºï¿½{ï¿½ï¿½ï¿½Xï¿½Ü¦ï¿½ï¿½oï¿½Ë¡Aï¿½@ï¿½Ø¤Fï¿½Mï¿½Õ¡I
     HandleItemCollection(mario, items);
     HandleEnemyEnemyCollisions(enemies);
     HandleBlockItemInteractions(blocks, items);
@@ -64,18 +64,18 @@ void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<En
                 if (aIsMovingShell && !bIsMovingShell) {
                     enemyB->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(100);
-                    LOG_INFO("Àt´ß (A) À»±þ¤F¼Ä¤H¡I");
+                    LOG_INFO("ï¿½tï¿½ï¿½ (A) ï¿½ï¿½ï¿½ï¿½ï¿½Fï¿½Ä¤Hï¿½I");
                 }
                 else if (bIsMovingShell && !aIsMovingShell) {
                     enemyA->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(100);
-                    LOG_INFO("Àt´ß (B) À»±þ¤F¼Ä¤H¡I");
+                    LOG_INFO("ï¿½tï¿½ï¿½ (B) ï¿½ï¿½ï¿½ï¿½ï¿½Fï¿½Ä¤Hï¿½I");
                 }
                 else if (aIsMovingShell && bIsMovingShell) {
                     enemyA->OnFireballHit();
                     enemyB->OnFireballHit();
                     GameStateManager::GetInstance().AddScore(200);
-                    LOG_INFO("¨â­ÓÀt´ß¤¬¬Û¼²·´¡I");
+                    LOG_INFO("ï¿½ï¿½ï¿½ï¿½tï¿½ß¤ï¿½ï¿½Û¼ï¿½ï¿½ï¿½ï¿½I");
                 }
                 else {
                     auto velA = enemyA->GetVelocity();
@@ -124,17 +124,24 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
         glm::vec2 enemySize = enemy->GetSize();
 
         if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
-            float marioBottom = marioPos.y - (marioSize.y / 2.0f);
-            float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
-            bool canBeStomped = enemy->IsStompable();
-
-            if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f && canBeStomped) {
-                enemy->OnStomped(mario);
+            if (mario->IsStarPowered()) {
+                enemy->OnFireballHit();
                 mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
-                mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
+                GameStateManager::GetInstance().AddScore(100);
             }
             else {
-                enemy->OnSideCollision(mario);
+                float marioBottom = marioPos.y - (marioSize.y / 2.0f);
+                float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
+                bool canBeStomped = enemy->IsStompable();
+
+                if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f && canBeStomped) {
+                    enemy->OnStomped(mario);
+                    mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
+                    mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
+                }
+                else {
+                    enemy->OnSideCollision(mario);
+                }
             }
         }
     }

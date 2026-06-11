@@ -18,6 +18,8 @@ set(INCLUDE_FILES
     GameStateManager.hpp
     Koopa.hpp
     PiranhaPlant.hpp
+    OneUp.hpp
+    SuperStar.hpp
 )
 
 set(TEST_FILES

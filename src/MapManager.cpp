@@ -11,6 +11,8 @@
 #include "Flag.hpp"
 #include "EnterablePipe.hpp"
 #include "Coin.hpp"
+#include "OneUp.hpp"
+#include "SuperStar.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -58,6 +60,8 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM)); break;
             case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN)); break;
             case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER)); break;
+            case 'U': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", QuestionBlock::ItemType::ONEUP)); break;
+            case '*': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", QuestionBlock::ItemType::STAR)); break;
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
                 // ���ިt�C

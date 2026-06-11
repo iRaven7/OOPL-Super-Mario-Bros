@@ -34,13 +34,16 @@ public:
 private:
     void UpdateCamera();
 
-    // 剛才拆分出來的小函式宣告
+    // 嚙踝蕭~嚙踝蕭嚙踝蕭X嚙諉迎蕭嚙緘嚙賜式嚙褐告
     void UpdateUI();
-    void TriggerLevelTransition();       // 觸發過場的函式
+    void TriggerLevelTransition();       // 觸嚙緻嚙盤嚙踝蕭嚙踝蕭嚙賜式
     void TriggerDeath();
-    bool m_IsTransitioning = false;      // 記錄是不是正在過場
+    bool m_IsTransitioning = false;
     bool m_IsDeadTransition = false;
-    float m_LevelTransitionTimer = 0.0f; // 過場倒數計時器
+    float m_LevelTransitionTimer = 0.0f;
+
+    bool m_IsGameOver = false;
+    float m_GameOverTimer = 0.0f;
 
     template <typename T>
     void CleanupInactiveEntities(std::vector<std::shared_ptr<T>>& entities);
@@ -59,13 +62,17 @@ private:
     std::vector<std::shared_ptr<Fireball>> m_Fireballs;
 
     std::shared_ptr<Background> m_Background;
-    // UI 元件宣告
+    // UI 嚙踝蕭嚙踝蕭襲i
     std::shared_ptr<Util::GameObject> m_ScoreUI;
     std::shared_ptr<Util::Text> m_ScoreText;
     std::shared_ptr<Util::GameObject> m_CoinUI;
     std::shared_ptr<Util::Text> m_CoinText;
+    std::shared_ptr<Util::GameObject> m_LivesUI;
+    std::shared_ptr<Util::Text> m_LivesText;
     std::shared_ptr<Util::GameObject> m_TimeUI;
     std::shared_ptr<Util::Text> m_TimeText;
+    std::shared_ptr<Util::GameObject> m_GameOverUI;
+    std::shared_ptr<Util::Text> m_GameOverText;
 
     int m_CurrentLevel = 0;
     float m_CameraX = 0.0f;

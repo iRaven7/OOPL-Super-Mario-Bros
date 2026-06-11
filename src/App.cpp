@@ -27,8 +27,15 @@ void App::Start() {
     m_CoinText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "COINS: 00", Util::Color{ 255, 255, 255, 255 });
     m_CoinUI->SetDrawable(m_CoinText);
     m_CoinUI->SetZIndex(100);
-    m_CoinUI->m_Transform.translation = { 0.0f, 250.0f };
+    m_CoinUI->m_Transform.translation = { -100.0f, 250.0f };
     m_Root.AddChild(m_CoinUI);
+
+    m_LivesUI = std::make_shared<Util::GameObject>();
+    m_LivesText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "LIVES: 3", Util::Color{ 255, 255, 255, 255 });
+    m_LivesUI->SetDrawable(m_LivesText);
+    m_LivesUI->SetZIndex(100);
+    m_LivesUI->m_Transform.translation = { 100.0f, 250.0f };
+    m_Root.AddChild(m_LivesUI);
 
     m_TimeUI = std::make_shared<Util::GameObject>();
     m_TimeText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 24, "TIME: 400", Util::Color{ 255, 255, 255, 255 });
@@ -36,6 +43,14 @@ void App::Start() {
     m_TimeUI->SetZIndex(100);
     m_TimeUI->m_Transform.translation = { 300.0f, 250.0f };
     m_Root.AddChild(m_TimeUI);
+
+    m_GameOverUI = std::make_shared<Util::GameObject>();
+    m_GameOverText = std::make_shared<Util::Text>(RESOURCE_DIR"/Fonts/SMB.ttf", 48, "GAME OVER", Util::Color{ 255, 255, 255, 255 });
+    m_GameOverUI->SetDrawable(m_GameOverText);
+    m_GameOverUI->SetZIndex(200);
+    m_GameOverUI->m_Transform.translation = { 0.0f, 0.0f };
+    m_GameOverUI->SetVisible(false);
+    m_Root.AddChild(m_GameOverUI);
 
     LoadLevel(0);
     m_Mario->ChangeState(std::make_unique<BigMarioState>());
@@ -108,6 +123,10 @@ void App::UpdateUI() {
     coinSs << "COINS: " << std::setw(2) << std::setfill('0') << stateManager.GetCoins();
     m_CoinText->SetText(coinSs.str());
 
+    std::ostringstream livesSs;
+    livesSs << "LIVES: " << stateManager.GetLives();
+    m_LivesText->SetText(livesSs.str());
+
     std::ostringstream timeSs;
     timeSs << "TIME: " << std::setw(3) << std::setfill('0') << stateManager.GetTimeRemaining();
     m_TimeText->SetText(timeSs.str());
@@ -132,16 +151,44 @@ void App::Update() {
 
     auto& stateManager = GameStateManager::GetInstance();
 
+    if (m_IsGameOver) {
+        m_GameOverTimer -= deltaTime;
+        if (m_GameOverTimer <= 0.0f) {
+            m_IsGameOver = false;
+            m_GameOverUI->SetVisible(false);
+            stateManager.Reset();
+            m_Root.RemoveChild(m_Mario);
+            m_Mario = std::make_shared<Mario>();
+            m_Root.AddChild(m_Mario);
+            LoadLevel(0);
+        }
+        UpdateUI();
+        m_Root.Update();
+        return;
+    }
+
     if (m_IsTransitioning) {
         m_LevelTransitionTimer -= deltaTime;
+
+        if (m_IsDeadTransition) {
+            m_Mario->UpdateDeathAnimation(deltaTime);
+        }
+
         if (m_LevelTransitionTimer <= 0.0f) {
             m_IsTransitioning = false;
             if (m_IsDeadTransition) {
                 m_IsDeadTransition = false;
-                m_Root.RemoveChild(m_Mario);
-                m_Mario = std::make_shared<Mario>();
-                m_Root.AddChild(m_Mario);
-                LoadLevel(m_CurrentLevel);
+                if (stateManager.GetLives() <= 0) {
+                    m_IsGameOver = true;
+                    m_GameOverTimer = 4.0f;
+                    m_GameOverUI->SetVisible(true);
+                }
+                else {
+                    m_Root.RemoveChild(m_Mario);
+                    m_Mario = std::make_shared<Mario>();
+                    m_Root.AddChild(m_Mario);
+                    LoadLevel(m_CurrentLevel);
+                }
             }
             else {
                 LoadLevel(m_CurrentLevel + 1);
@@ -305,9 +352,11 @@ void App::UpdateCamera() {
 }
 
 void App::TriggerDeath() {
+    GameStateManager::GetInstance().AddLife(-1);
+    m_Mario->StartDeathAnimation();
     m_IsTransitioning = true;
     m_IsDeadTransition = true;
-    m_LevelTransitionTimer = 2.0f;
+    m_LevelTransitionTimer = 2.5f;
 }
 
 void App::TriggerLevelTransition() {

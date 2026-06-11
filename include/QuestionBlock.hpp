@@ -3,13 +3,15 @@
 
 #include "Block.hpp"
 #include "Item.hpp"
-#include "Mushroom.hpp" 
+#include "Mushroom.hpp"
 #include "Coin.hpp"
 #include "FireFlower.hpp"
+#include "OneUp.hpp"
+#include "SuperStar.hpp"
 
 class QuestionBlock : public Block {
 public:
-    enum class ItemType { MUSHROOM, COIN, FIREFLOWER }; // ���ӥi�X�R����
+    enum class ItemType { MUSHROOM, COIN, FIREFLOWER, ONEUP, STAR };
 
     QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
 
@@ -45,6 +47,12 @@ public:
             m_SpawnedItem = isSmall
                 ? std::static_pointer_cast<Item>(std::make_shared<Mushroom>(GetPosition()))
                 : std::static_pointer_cast<Item>(std::make_shared<FireFlower>(GetPosition()));
+        }
+        else if (m_ItemType == ItemType::ONEUP) {
+            m_SpawnedItem = std::make_shared<OneUp>(GetPosition());
+        }
+        else if (m_ItemType == ItemType::STAR) {
+            m_SpawnedItem = std::make_shared<SuperStar>(GetPosition());
         }
     }
 

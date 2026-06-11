@@ -1,7 +1,8 @@
 #include "Mario.hpp"
-#include "MarioState.hpp"      
-#include "GameStateManager.hpp" 
+#include "MarioState.hpp"
+#include "GameStateManager.hpp"
 #include "Util/Logger.hpp"
+#include "Constants.hpp"
 
 Mario::Mario() : Character(RESOURCE_DIR"/Entities/LittleMario/mario.png") {
     SetZIndex(50);
@@ -143,6 +144,7 @@ void Mario::UpdateRenderPosition(float cameraX, float cameraZoom) {
 
 void Mario::Update(float deltaTime) {
     if (m_ShootCooldown > 0.0f) m_ShootCooldown -= deltaTime;
+
     if (m_InvincibleTimer > 0.0f) {
         m_InvincibleTimer -= deltaTime;
         m_Visible = (static_cast<int>(m_InvincibleTimer * 10) % 2 == 0);
@@ -151,10 +153,16 @@ void Mario::Update(float deltaTime) {
         m_InvincibleTimer = 0.0f;
         m_Visible = true;
     }
+
+    if (m_StarTimer > 0.0f) {
+        m_StarTimer -= deltaTime;
+        if (m_StarTimer <= 0.0f) m_StarTimer = 0.0f;
+        m_Visible = (static_cast<int>(m_StarTimer * 20) % 2 == 0);
+    }
 }
 
 void Mario::TakeDamage() {
-    if (IsInvincible() || IsControlLocked()) return;
+    if (IsInvincible() || IsControlLocked() || IsStarPowered()) return;
 
     if (dynamic_cast<SmallMarioState*>(m_State.get()) != nullptr) {
         Die();
@@ -185,6 +193,29 @@ void Mario::Shoot() {
 
 void Mario::Die() {
     m_IsDead = true;
+}
+
+void Mario::StartDeathAnimation() {
+    SetImage(RESOURCE_DIR"/Entities/LittleMario/mario_dead.png");
+    m_Velocity = { 0.0f, 0.0f };
+    m_DeathAnimTimer = 0.0f;
+    m_DeathVelocityY = 0.0f;
+    m_DeathBounceStarted = false;
+    m_Visible = true;
+}
+
+void Mario::UpdateDeathAnimation(float deltaTime) {
+    m_DeathAnimTimer += deltaTime;
+    if (m_DeathAnimTimer < 0.5f) return;
+
+    if (!m_DeathBounceStarted) {
+        m_DeathBounceStarted = true;
+        m_DeathVelocityY = 700.0f;
+    }
+
+    m_DeathVelocityY += PhysicsConstants::GRAVITY * deltaTime;
+    m_WorldPosition.y += m_DeathVelocityY * deltaTime;
+    SetPosition(m_WorldPosition);
 }
 
 glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSprinting, bool wantsJump, const std::vector<std::shared_ptr<Block>>& blocks) {
