@@ -26,7 +26,7 @@ public:
     void Start();
     void Update();
     void End();
-    void LoadLevel(int level);
+    void LoadLevel(int level, float spawnX = -300.0f);
 
     float GetCameraZoom() const { return m_CameraZoom; }
     void SetCameraZoom(float zoom) { m_CameraZoom = std::max(0.1f, zoom); }

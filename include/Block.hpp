@@ -3,7 +3,7 @@
 
 #include "Util/GameObject.hpp"
 #include "Util/Image.hpp"
-#include <glm/glm.hpp> // ©ú½T¥[¤W³o­Ó
+#include <glm/glm.hpp> // ï¿½ï¿½ï¿½Tï¿½[ï¿½Wï¿½oï¿½ï¿½
 #include <string>
 #include <memory>
 
@@ -61,6 +61,7 @@ public:
     virtual std::shared_ptr<Item> PopSpawnedItem() { return nullptr; }
     virtual bool IsPipeEntrance() const { return false; }
     virtual int GetTargetLevel() const { return -1; }
+    virtual float GetSpawnX() const { return -300.0f; }
 
 protected:
     std::string m_ImagePath;

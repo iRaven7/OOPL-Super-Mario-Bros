@@ -17,11 +17,12 @@
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
     std::vector<std::shared_ptr<Enemy>>& outEnemies,
-    std::vector<std::shared_ptr<Item>>& outItems) {
+    std::vector<std::shared_ptr<Item>>& outItems,
+    const LevelPipeConfig& pipeConfig) {
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
-        LOG_ERROR("�L�k���J�a��: {}", filePath);
+        LOG_ERROR("Cannot open map: {}", filePath);
         return;
     }
 
@@ -35,28 +36,39 @@ void MapManager::LoadMap(const std::string& filePath,
         for (size_t col = 0; col < line.length(); ++col) {
             char tileType = line[col];
 
-            // �J��ťժ������L�A���������o�^�X
-            if (tileType == '0') {
-                continue;
-            }
+            if (tileType == '0') continue;
 
-            // �w���p��n�ӹ϶�������@�ɮy��
             glm::vec2 pos = { startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE };
 
-            // �g�@�Ӥp�p�����U�禡�A�Τ@�B�z������򥻳]�w
             auto addBlock = [&](const std::shared_ptr<Block>& block) {
                 block->SetPosition(pos);
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
-                };
+            };
 
-            // ��� switch ���޿�@�ؤF�M
             switch (tileType) {
-                // �@�����t�C
+                // --- floor / terrain ---
             case '1': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png")); break;
+            case '2': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/building.png")); break;
+            case '9': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/castle.png")); break;
             case '3': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png")); break;
 
-                // �ݸ�����t�C
+                // blue variants
+            case 'b': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor_blue.png")); break;
+            case 'B': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png")); break;
+
+                // floating floor — always 5 tiles wide; put zeros in the 4 cols to the right in the map
+            case 'f': {
+                for (int i = 0; i < 7; ++i) {
+                    auto tile = std::make_shared<Block>(RESOURCE_DIR"/Blocks/floating_floor.png");
+                    tile->SetPosition({ pos.x + i * BLOCK_SIZE, pos.y });
+                    tile->SetZIndex(10);
+                    outBlocks.push_back(tile);
+                }
+                break;
+            }
+
+                // --- question blocks ---
             case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM)); break;
             case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN)); break;
             case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER)); break;
@@ -64,34 +76,44 @@ void MapManager::LoadMap(const std::string& filePath,
             case '*': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", QuestionBlock::ItemType::STAR)); break;
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
-                // ���ިt�C
+                // --- pipe tiles (visual only) ---
             case 'o': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
             case 'p': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
             case 'k': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
             case 'l': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
 
+                // --- warp pipes ---
+                // 'W' : enter pipe — destination and spawn come from LevelPipeConfig::subMapLevel/subMapSpawnX
+                // 'w' : exit  pipe — destination and spawn come from LevelPipeConfig::parentLevel/returnSpawnX
+                // 'E'/'e' kept for legacy test maps; hard-coded targets 2 and 0
+            case 'W':
+                if (pipeConfig.subMapLevel >= 0)
+                    addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                        pipeConfig.subMapLevel, pipeConfig.subMapSpawnX));
+                break;
+            case 'w':
+                if (pipeConfig.parentLevel >= 0)
+                    addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                        pipeConfig.parentLevel, pipeConfig.returnSpawnX));
+                break;
             case 'E': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
             case 'e': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 0)); break;
 
-                // �ĤH�t�C (�ĤH���ݭn�]�w ZIndex�A������i�}�C)
+                // --- enemies ---
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;
             case '5': outEnemies.push_back(std::make_shared<Koopa>(pos)); break;
             case 'P': outEnemies.push_back(std::make_shared<PiranhaPlant>(pos)); break;
 
-                // �X�m
+                // --- flag pole ---
             case 'X': {
-                // 1. ���� 9 �`�I���X��
                 for (int i = 0; i < 18; ++i) {
                     auto pole = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_pole.png");
-                    pole->SetPosition({ pos.x, pos.y + i * 16.0f }); // ���W�|
+                    pole->SetPosition({ pos.x, pos.y + i * 16.0f });
                     outBlocks.push_back(pole);
                 }
-                // 2. ���ͳ��ݪ���y
                 auto top = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_top.png");
                 top->SetPosition({ pos.x, pos.y + 18 * 16.0f });
                 outBlocks.push_back(top);
-
-                // 3. ���ͷ|�ʪ��X�m�P����Ĳ�o��
                 auto flag = std::make_shared<Flag>(pos);
                 outItems.push_back(flag);
                 break;

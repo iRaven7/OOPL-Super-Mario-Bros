@@ -96,8 +96,8 @@ private:
 
 class PipeSlideState : public MarioState {
 public:
-    PipeSlideState(bool isBig, float targetY, int targetLevel)
-        : m_IsBig(isBig), m_TargetY(targetY), m_TargetLevel(targetLevel) {
+    PipeSlideState(bool isBig, float targetY, int targetLevel, float spawnX = -300.0f)
+        : m_IsBig(isBig), m_TargetY(targetY), m_TargetLevel(targetLevel), m_SpawnX(spawnX) {
     }
 
     glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
@@ -116,11 +116,13 @@ public:
     bool IsDownReached() const { return m_IsDownReached; }
     void SetDownReached(bool val) { m_IsDownReached = val; }
     int GetTargetLevel() const { return m_TargetLevel; }
+    float GetSpawnX() const { return m_SpawnX; }
 
 private:
     bool m_IsBig;
     float m_TargetY;
     int m_TargetLevel;
+    float m_SpawnX;
     bool m_IsDownReached = false;
 };
 

@@ -56,7 +56,7 @@ void App::Start() {
     m_Mario->ChangeState(std::make_unique<BigMarioState>());
 }
 
-void App::LoadLevel(int level) {
+void App::LoadLevel(int level, float spawnX) {
     m_CurrentLevel = level;
 
     for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
@@ -78,25 +78,53 @@ void App::LoadLevel(int level) {
     m_Root.AddChild(m_Background);
     m_Root.AddChild(m_Mario);
 
-    std::string mapPath;
-    if (level == 0) {
-        mapPath = RESOURCE_DIR"/Map/test_place.txt";
-    }
-    else if (level == 2) {
-        mapPath = RESOURCE_DIR"/Map/pipe_test.txt";
-    }
-    else {
-        mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
+    // Per-level configuration.
+    // Sub-maps are numbered 10+N (level 1's sub-map = 11, level 2's = 12, …).
+    // Add a new case here whenever a new main level or sub-map is created.
+    struct LevelConfig {
+        std::string    mapPath;
+        LevelPipeConfig pipes;
+        float          cameraZoom  = 1.8f;
+        float          initCameraX = 0.0f;
+    };
+
+    LevelConfig cfg;
+    switch (level) {
+        case 0:   // test / debug map
+            cfg.mapPath = RESOURCE_DIR"/Map/test_place.txt";
+            break;
+
+        case 1:   // World 1-1
+            cfg.mapPath      = RESOURCE_DIR"/Map/level1.txt";
+            // 'W' pipe → sub-map 11; Mario enters at default spawn (-300)
+            // 'w' pipe in sub-map returns here at x = 700 (col 62 of level1)
+            cfg.pipes        = { 11, -196.0f, -1, 0.0f }; // sub-map spawn at col 6 centre
+            break;
+
+        case 11:  // Sub-map for level 1
+            cfg.mapPath      = RESOURCE_DIR"/Map/pipe1.txt";
+            // 'w' pipe returns to level 1; Mario exits at x = 700 (beside the W pipe)
+            cfg.pipes        = { -1, 0.0f, 1, 700.0f };
+            cfg.cameraZoom   = 1280.0f / (17 * 16.0f);   // exactly 17 blocks wide
+            cfg.initCameraX  = -310.0f + (17 * 16.0f / 2.0f);  // centre the room
+            break;
+
+        // Add case 2, case 12, case 3, case 13 … here for future levels
+        default:
+            cfg.mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
+            break;
     }
 
-    m_MapManager.LoadMap(mapPath, m_CurrentMapBlocks, m_Enemies, m_Items);
+    m_MapManager.LoadMap(cfg.mapPath, m_CurrentMapBlocks, m_Enemies, m_Items, cfg.pipes);
 
     for (auto& block : m_CurrentMapBlocks) { m_Root.AddChild(block); }
     for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
     for (auto& item : m_Items) { m_Root.AddChild(item); }
 
-    m_CameraX = 0.0f;
-    m_Mario->SetPosition({ -300.0f, 1500.0f });
+    m_CameraZoom = cfg.cameraZoom;
+    m_CameraX    = cfg.initCameraX;
+
+    m_Mario->SetPosition({ spawnX, 1500.0f });
     m_Mario->SetVelocity({ 0.0f, 0.0f });
     m_Mario->SetZIndex(50);
 
@@ -246,7 +274,8 @@ void App::Update() {
                     std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 8.0f)) < 8.0f) {
 
                     int target = block->GetTargetLevel();
-                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target), false);
+                    float spawnX = block->GetSpawnX();
+                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target, spawnX), false);
                     m_Mario->SetPosition({ blockPos.x + 8.0f, marioPos.y });
                     break;
                 }
@@ -257,7 +286,7 @@ void App::Update() {
     // 檢查是不是鑽到底了
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
         if (pipeState->IsDownReached()) {
-            LoadLevel(pipeState->GetTargetLevel());
+            LoadLevel(pipeState->GetTargetLevel(), pipeState->GetSpawnX());
         }
     }
 
@@ -304,8 +333,17 @@ void App::Update() {
     UpdateCamera();
     m_Root.Update();
 
+    // Keys 0-9: main-level selector (sub-maps 11+ are only reachable via pipes)
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_1)) LoadLevel(1);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_2)) LoadLevel(2);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_3)) LoadLevel(3);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_4)) LoadLevel(4);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_5)) LoadLevel(5);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_6)) LoadLevel(6);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_7)) LoadLevel(7);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_8)) LoadLevel(8);
+    if (Util::Input::IsKeyPressed(Util::Keycode::NUM_9)) LoadLevel(9);
 
     if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) || Util::Input::IfExit()) {
         m_CurrentState = State::END;
