@@ -9,31 +9,30 @@
 
 class QuestionBlock : public Block {
 public:
-    enum class ItemType { MUSHROOM, COIN, FIREFLOWER }; // 未來可擴充金幣
+    enum class ItemType { MUSHROOM, COIN, FIREFLOWER }; // 嚙踝蕭嚙諉可嚙碼嚙磋嚙踝蕭嚙踝蕭
 
     QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
 
-    // 在 QuestionBlock 類別中修改此段：
+    // 嚙箭 QuestionBlock 嚙踝蕭嚙瞌嚙踝蕭嚙論改此嚙緬嚙瘦
     glm::vec2 GetCollisionPosition() const override {
-        // 修正：必須使用絕對的 m_WorldPosition.x
+        // 嚙論伐蕭嚙瘦嚙踝蕭嚙踝蕭嚙誕用蛛蕭嚙踝的 m_WorldPosition.x
         return { m_WorldPosition.x, m_OriginalY };
     }
 
-    // 同樣確認 SetPosition 有加上 override
+    // 嚙瞑嚙誼確嚙緹 SetPosition 嚙踝蕭嚙稼嚙磕 override
     void SetPosition(const glm::vec2& Position) override {
         Block::SetPosition(Position);
         if (!m_IsBouncing) m_OriginalY = Position.y;
     }
 
-    void OnHit(Character*) override {
-        if (m_IsEmpty || m_IsBouncing) return; // 已經空了或正在動畫中，不反應
+    void OnHit(Character* hitter) override {
+        if (m_IsEmpty || m_IsBouncing) return;
 
         m_IsBouncing = true;
         m_BounceVelocity = 250.0f;
         m_IsEmpty = true;
         SetImage(RESOURCE_DIR"/Blocks/empty_question_block.png");
 
-        // 實例化道具
         if (m_ItemType == ItemType::MUSHROOM) {
             m_SpawnedItem = std::make_shared<Mushroom>(GetPosition());
         }
@@ -41,7 +40,11 @@ public:
             m_SpawnedItem = std::make_shared<Coin>(GetPosition());
         }
         else if (m_ItemType == ItemType::FIREFLOWER) {
-            m_SpawnedItem = std::make_shared<FireFlower>(GetPosition());
+            Mario* mario = dynamic_cast<Mario*>(hitter);
+            bool isSmall = mario && dynamic_cast<SmallMarioState*>(mario->GetState());
+            m_SpawnedItem = isSmall
+                ? std::static_pointer_cast<Item>(std::make_shared<Mushroom>(GetPosition()))
+                : std::static_pointer_cast<Item>(std::make_shared<FireFlower>(GetPosition()));
         }
     }
 
@@ -62,7 +65,7 @@ public:
 
     std::shared_ptr<Item> PopSpawnedItem() override {
         auto item = m_SpawnedItem;
-        m_SpawnedItem = nullptr; // 提取後清空，確保只生成一次
+        m_SpawnedItem = nullptr; // 嚙踝蕭嚙踝蕭嚙踝蕭M嚙褐，嚙確嚙瞌嚙線嚙談佗蕭嚙瑾嚙踝蕭
         return item;
     }
 

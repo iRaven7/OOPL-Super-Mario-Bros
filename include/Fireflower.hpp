@@ -3,8 +3,8 @@
 
 #include "Item.hpp"
 #include "GameStateManager.hpp"
-#include "Mario.hpp"      // ¸É¤W³o­Ó
-#include "MarioState.hpp" // ¸É¤W³o­Ó
+#include "Mario.hpp"      // ï¿½É¤Wï¿½oï¿½ï¿½
+#include "MarioState.hpp" // ï¿½É¤Wï¿½oï¿½ï¿½
 
 class FireFlower : public Item {
 public:
@@ -32,7 +32,7 @@ public:
             m_IsActive = false;
             m_Visible = false;
             GameStateManager::GetInstance().AddScore(1000);
-            if (mario) {
+            if (mario && !dynamic_cast<FireMarioState*>(mario->GetState())) {
                 mario->ChangeState(std::make_unique<FireMarioState>());
             }
         }

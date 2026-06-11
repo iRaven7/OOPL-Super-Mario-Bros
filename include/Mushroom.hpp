@@ -3,8 +3,8 @@
 
 #include "Item.hpp"
 #include "GameStateManager.hpp"
-#include "Mario.hpp"      // ¸É¤W³o­Ó
-#include "MarioState.hpp" // ¸É¤W³o­Ó
+#include "Mario.hpp"      // ï¿½É¤Wï¿½oï¿½ï¿½
+#include "MarioState.hpp" // ï¿½É¤Wï¿½oï¿½ï¿½
 
 class Mushroom : public Item {
 public:
@@ -62,8 +62,10 @@ public:
     void OnCollect(Mario* mario) override {
         m_IsActive = false;
         m_Visible = false;
-        mario->ChangeState(std::make_unique<BigMarioState>());
         GameStateManager::GetInstance().AddScore(1000);
+        if (dynamic_cast<SmallMarioState*>(mario->GetState())) {
+            mario->ChangeState(std::make_unique<BigMarioState>());
+        }
     }
 
 private:

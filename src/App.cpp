@@ -68,7 +68,7 @@ void App::LoadLevel(int level) {
         mapPath = RESOURCE_DIR"/Map/test_place.txt";
     }
     else if (level == 2) {
-        mapPath = RESOURCE_DIR"/Map/pipe1.txt";
+        mapPath = RESOURCE_DIR"/Map/pipe_test.txt";
     }
     else {
         mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";

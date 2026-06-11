@@ -10,6 +10,7 @@
 #include "BackgroundProp.hpp"
 #include "Flag.hpp"
 #include "EnterablePipe.hpp"
+#include "Coin.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -18,7 +19,7 @@ void MapManager::LoadMap(const std::string& filePath,
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
-        LOG_ERROR("µLªk¸ü¤J¦a¹Ï: {}", filePath);
+        LOG_ERROR("ï¿½Lï¿½kï¿½ï¿½ï¿½Jï¿½aï¿½ï¿½: {}", filePath);
         return;
     }
 
@@ -32,59 +33,61 @@ void MapManager::LoadMap(const std::string& filePath,
         for (size_t col = 0; col < line.length(); ++col) {
             char tileType = line[col];
 
-            // ¹J¨ìªÅ¥Õª½±µ¸õ¹L¡A´£¦­µ²§ô³o¦^¦X
+            // ï¿½Jï¿½ï¿½Å¥Õªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Lï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½^ï¿½X
             if (tileType == '0') {
                 continue;
             }
 
-            // ¹w¥ý­pºâ¦n¸Ó¹Ï¶ôªºµ´¹ï¥@¬É®y¼Ð
+            // ï¿½wï¿½ï¿½ï¿½pï¿½ï¿½nï¿½Ó¹Ï¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½@ï¿½É®yï¿½ï¿½
             glm::vec2 pos = { startX + col * BLOCK_SIZE, startY - row * BLOCK_SIZE };
 
-            // ¼g¤@­Ó¤p¤pªº»²§U¨ç¦¡¡A²Î¤@³B²z¤è¶ôªº°ò¥»³]©w
+            // ï¿½gï¿½@ï¿½Ó¤pï¿½pï¿½ï¿½ï¿½ï¿½ï¿½Uï¿½ç¦¡ï¿½Aï¿½Î¤@ï¿½Bï¿½zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò¥»³]ï¿½w
             auto addBlock = [&](const std::shared_ptr<Block>& block) {
                 block->SetPosition(pos);
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
                 };
 
-            // §ï¥Î switch ÅýÅÞ¿è¤@¥Ø¤FµM
+            // ï¿½ï¿½ï¿½ switch ï¿½ï¿½ï¿½Þ¿ï¿½@ï¿½Ø¤Fï¿½M
             switch (tileType) {
-                // ¤@¯ë¤è¶ô¨t¦C
+                // ï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½tï¿½C
             case '1': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png")); break;
             case '3': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png")); break;
 
-                // °Ý¸¹¤è¶ô¨t¦C
+                // ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½tï¿½C
             case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM)); break;
             case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN)); break;
             case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER)); break;
+            case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
-                // ¤ôºÞ¨t¦C
+                // ï¿½ï¿½ï¿½Þ¨tï¿½C
             case 'o': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
             case 'p': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
             case 'k': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
             case 'l': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
 
             case 'E': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
+            case 'e': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 0)); break;
 
-                // ¼Ä¤H¨t¦C (¼Ä¤H¤£»Ý­n³]©w ZIndex¡Aª½±µ¥á¶i°}¦C)
+                // ï¿½Ä¤Hï¿½tï¿½C (ï¿½Ä¤Hï¿½ï¿½ï¿½Ý­nï¿½]ï¿½w ZIndexï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½}ï¿½C)
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;
             case '5': outEnemies.push_back(std::make_shared<Koopa>(pos)); break;
             case 'P': outEnemies.push_back(std::make_shared<PiranhaPlant>(pos)); break;
 
-                // ºX¼m
+                // ï¿½Xï¿½m
             case 'X': {
-                // 1. ²£¥Í 9 ¸`­I´ººX±ì
+                // 1. ï¿½ï¿½ï¿½ï¿½ 9 ï¿½`ï¿½Iï¿½ï¿½ï¿½Xï¿½ï¿½
                 for (int i = 0; i < 18; ++i) {
                     auto pole = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_pole.png");
-                    pole->SetPosition({ pos.x, pos.y + i * 16.0f }); // ©¹¤WÅ|
+                    pole->SetPosition({ pos.x, pos.y + i * 16.0f }); // ï¿½ï¿½ï¿½Wï¿½|
                     outBlocks.push_back(pole);
                 }
-                // 2. ²£¥Í³»ºÝªº¶ê²y
+                // 2. ï¿½ï¿½ï¿½Í³ï¿½ï¿½Ýªï¿½ï¿½ï¿½y
                 auto top = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_top.png");
                 top->SetPosition({ pos.x, pos.y + 18 * 16.0f });
                 outBlocks.push_back(top);
 
-                // 3. ²£¥Í·|°ÊªººX¼m»PÁô§ÎÄ²µo¾¹
+                // 3. ï¿½ï¿½ï¿½Í·|ï¿½Êªï¿½ï¿½Xï¿½mï¿½Pï¿½ï¿½ï¿½ï¿½Ä²ï¿½oï¿½ï¿½
                 auto flag = std::make_shared<Flag>(pos);
                 outItems.push_back(flag);
                 break;
