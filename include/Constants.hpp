@@ -3,10 +3,10 @@
 #define CONSTANTS_HPP
 
 namespace PhysicsConstants {
-    constexpr float GRAVITY = -2400.0f;
-    constexpr float MAX_FALL_SPEED = -900.0f;
-    constexpr float JUMP_FORCE = 850.0f;
-    constexpr float JUMP_CUT_SPEED = 200.0f;   // vy cap when jump key released early
+    constexpr float GRAVITY = -1480.0f;
+    constexpr float MAX_FALL_SPEED = -430.0f;
+    constexpr float JUMP_FORCE = 520.0f;
+    constexpr float JUMP_CUT_SPEED = 170.0f;   // vy cap when jump key released early
     constexpr float WALK_ACCEL = 400.0f;
     constexpr float SPRINT_ACCEL = 700.0f;
     constexpr float MAX_WALK_SPEED = 300.0f;

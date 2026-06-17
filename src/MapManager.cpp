@@ -46,6 +46,11 @@ void MapManager::LoadMap(const std::string& filePath,
                 block->SetZIndex(10);
                 outBlocks.push_back(block);
             };
+            auto addPipe = [&](const std::shared_ptr<Block>& block) {
+                block->SetPosition(pos);
+                block->SetZIndex(55);
+                outBlocks.push_back(block);
+            };
 
             switch (tileType) {
                 // --- floor / terrain ---
@@ -83,10 +88,10 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
                 // --- pipe tiles (visual only) ---
-            case 'o': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
-            case 'p': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
-            case 'k': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
-            case 'l': addBlock(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
+            case 'o': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
+            case 'p': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
+            case 'k': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
+            case 'l': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
 
                 // --- warp pipes ---
                 // 'W' : enter pipe — destination and spawn come from LevelPipeConfig::subMapLevel/subMapSpawnX
@@ -94,16 +99,31 @@ void MapManager::LoadMap(const std::string& filePath,
                 // 'E'/'e' kept for legacy test maps; hard-coded targets 2 and 0
             case 'W':
                 if (pipeConfig.subMapLevel >= 0)
-                    addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
                         pipeConfig.subMapLevel, pipeConfig.subMapSpawnX));
                 break;
             case 'w':
                 if (pipeConfig.parentLevel >= 0)
-                    addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
                         pipeConfig.parentLevel, pipeConfig.returnSpawnX));
                 break;
-            case 'E': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
-            case 'e': addBlock(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 0)); break;
+            case 'E': addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
+            case 'e': addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 0)); break;
+
+                // '>' : horizontal right-entry pipe (uses subMapLevel/subMapSpawnX)
+                // '<' : horizontal left-entry  pipe (uses parentLevel/returnSpawnX)
+            case '>':
+                if (pipeConfig.subMapLevel >= 0)
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                        pipeConfig.subMapLevel, pipeConfig.subMapSpawnX,
+                        Block::PipeEntryDir::Right));
+                break;
+            case '<':
+                if (pipeConfig.parentLevel >= 0)
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                        pipeConfig.parentLevel, pipeConfig.returnSpawnX,
+                        Block::PipeEntryDir::Left));
+                break;
 
                 // --- enemies ---
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;

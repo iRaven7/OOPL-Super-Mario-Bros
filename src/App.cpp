@@ -53,7 +53,6 @@ void App::Start() {
     m_Root.AddChild(m_GameOverUI);
 
     LoadLevel(0);
-    m_Mario->ChangeState(std::make_unique<BigMarioState>());
 }
 
 void App::LoadLevel(int level, float spawnX) {
@@ -86,6 +85,8 @@ void App::LoadLevel(int level, float spawnX) {
         LevelPipeConfig pipes;
         float          cameraZoom  = 1.8f;
         float          initCameraX = 0.0f;
+        bool           cameraLocked = false;
+        float          cameraY      = 0.0f;
     };
 
     LevelConfig cfg;
@@ -103,10 +104,12 @@ void App::LoadLevel(int level, float spawnX) {
 
         case 11:  // Sub-map for level 1
             cfg.mapPath      = RESOURCE_DIR"/Map/pipe1.txt";
-            // 'w' pipe returns to level 1; Mario exits at x = 700 (beside the W pipe)
-            cfg.pipes        = { -1, 0.0f, 1, 700.0f };
+            // 'w' pipe returns to level 1; Mario exits at second pipe from right (col ~170)
+            cfg.pipes        = { -1, 0.0f, 1, 2420.0f };
             cfg.cameraZoom   = 1280.0f / (17 * 16.0f);   // exactly 17 blocks wide
             cfg.initCameraX  = -310.0f + (17 * 16.0f / 2.0f);  // centre the room
+            cfg.cameraLocked = true;   // fixed camera: do not follow Mario
+            cfg.cameraY      = -30.0f; // shift view down to show ground and coins
             break;
 
         // Add case 2, case 12, case 3, case 13 … here for future levels
@@ -121,10 +124,25 @@ void App::LoadLevel(int level, float spawnX) {
     for (auto& enemy : m_Enemies) { m_Root.AddChild(enemy); }
     for (auto& item : m_Items) { m_Root.AddChild(item); }
 
-    m_CameraZoom = cfg.cameraZoom;
-    m_CameraX    = cfg.initCameraX;
+    m_CameraZoom   = cfg.cameraZoom;
+    m_CameraX      = cfg.initCameraX;
+    m_CameraLocked = cfg.cameraLocked;
+    m_CameraY      = cfg.cameraY;
 
-    m_Mario->SetPosition({ spawnX, 1500.0f });
+    // Find the highest collidable floor surface at spawnX and land Mario on it.
+    float groundTop = -10000.0f;
+    for (const auto& block : m_CurrentMapBlocks) {
+        if (!block->IsActive() || !block->IsCollidable()) continue;
+        auto bPos  = block->GetCollisionPosition();
+        auto bSize = block->GetSize();
+        if (std::abs(bPos.x - spawnX) < bSize.x) {
+            float top = bPos.y + bSize.y * 0.5f;
+            if (top > groundTop) groundTop = top;
+        }
+    }
+    float spawnY = (groundTop > -9999.0f) ? (groundTop + 8.0f) : 1500.0f;
+
+    m_Mario->SetPosition({ spawnX, spawnY });
     m_Mario->SetVelocity({ 0.0f, 0.0f });
     m_Mario->SetZIndex(50);
 
@@ -262,22 +280,55 @@ void App::Update() {
         inputDirection = 0.0f;
     }
 
-    // 檢查鑽水管邏輯
-    if (wantsCrouch && m_Mario->IsGrounded() && !m_Mario->IsControlLocked()) {
-        auto marioPos = m_Mario->GetPosition();
+    // Pipe entrance — direction-aware
+    if (!m_Mario->IsControlLocked()) {
+        auto marioPos  = m_Mario->GetPosition();
         auto marioSize = m_Mario->GetSize();
+        bool isBig     = marioSize.y > 16.0f;
 
         for (auto& block : m_CurrentMapBlocks) {
-            if (block->IsPipeEntrance()) {
-                auto blockPos = block->GetPosition();
+            if (!block->IsPipeEntrance()) continue;
 
-                if (std::abs(marioPos.x - (blockPos.x + 8.0f)) < 20.0f &&
-                    std::abs((marioPos.y - marioSize.y / 2.0f) - (blockPos.y + 8.0f)) < 8.0f) {
+            auto blockPos  = block->GetPosition();
+            auto entryDir  = block->GetPipeEntryDir();
+            int  target    = block->GetTargetLevel();
+            float spawnX   = block->GetSpawnX();
 
-                    int target = block->GetTargetLevel();
-                    float spawnX = block->GetSpawnX();
-                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(marioSize.y > 16.0f, marioPos.y - 64.0f, target, spawnX), false);
-                    m_Mario->SetPosition({ blockPos.x + 8.0f, marioPos.y });
+            if (entryDir == Block::PipeEntryDir::Down) {
+                // Vertical pipe: Down key + grounded + feet near pipe-top face
+                if (!wantsCrouch || !m_Mario->IsGrounded()) continue;
+                float pipeCenterX = blockPos.x + 8.0f;   // pipe is 2 tiles wide
+                float pipeTopY    = blockPos.y + 8.0f;   // top face of entrance tile
+                if (std::abs(marioPos.x - pipeCenterX) < 20.0f &&
+                    std::abs((marioPos.y - marioSize.y / 2.0f) - pipeTopY) < 8.0f) {
+                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(
+                        isBig, PipeSlideState::SlideDir::Down,
+                        marioPos.y - 64.0f, target, spawnX), false);
+                    m_Mario->SetPosition({ pipeCenterX, marioPos.y });
+                    break;
+                }
+            }
+            else if (entryDir == Block::PipeEntryDir::Right) {
+                // Horizontal right pipe: Right input + Mario's right side near pipe left face
+                if (inputDirection <= 0.0f) continue;
+                float pipeLeftX  = blockPos.x - 8.0f;
+                if (std::abs((marioPos.x + marioSize.x / 2.0f) - pipeLeftX) < 12.0f &&
+                    std::abs(marioPos.y - blockPos.y) < marioSize.y / 2.0f + 8.0f) {
+                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(
+                        isBig, PipeSlideState::SlideDir::Right,
+                        marioPos.x + 64.0f, target, spawnX), false);
+                    break;
+                }
+            }
+            else if (entryDir == Block::PipeEntryDir::Left) {
+                // Horizontal left pipe: Left input + Mario's left side near pipe right face
+                if (inputDirection >= 0.0f) continue;
+                float pipeRightX = blockPos.x + 8.0f;
+                if (std::abs((marioPos.x - marioSize.x / 2.0f) - pipeRightX) < 12.0f &&
+                    std::abs(marioPos.y - blockPos.y) < marioSize.y / 2.0f + 8.0f) {
+                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(
+                        isBig, PipeSlideState::SlideDir::Left,
+                        marioPos.x - 64.0f, target, spawnX), false);
                     break;
                 }
             }
@@ -362,7 +413,7 @@ void App::UpdateCamera() {
         m_Background->UpdateRenderPosition(0.0f, m_CameraZoom);
     }
 
-    if (marioWorldX > m_CameraX + triggerX) {
+    if (!m_CameraLocked && marioWorldX > m_CameraX + triggerX) {
         m_CameraX = marioWorldX - triggerX;
     }
 
@@ -389,6 +440,21 @@ void App::UpdateCamera() {
 
     for (auto& fb : m_Fireballs) {
         if (fb->IsActive()) fb->UpdateRenderPosition(m_CameraX, m_CameraZoom);
+    }
+
+    // Apply Y camera offset: shift every rendered entity's translation by -cameraY * zoom.
+    // Positive cameraY moves the viewport up; negative moves it down (shows lower content).
+    if (m_CameraY != 0.0f) {
+        const float yShift = -m_CameraY * m_CameraZoom;
+        m_Mario->m_Transform.translation.y += yShift;
+        for (auto& block : m_CurrentMapBlocks)
+            block->m_Transform.translation.y += yShift;
+        for (auto& item : m_Items)
+            item->m_Transform.translation.y += yShift;
+        for (auto& enemy : m_Enemies)
+            if (enemy->IsActive()) enemy->m_Transform.translation.y += yShift;
+        for (auto& fb : m_Fireballs)
+            if (fb->IsActive()) fb->m_Transform.translation.y += yShift;
     }
 }
 

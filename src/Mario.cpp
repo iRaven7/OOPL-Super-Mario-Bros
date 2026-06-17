@@ -71,13 +71,16 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
             SetImage(m_State->GetIdleImage());
             m_Transform.scale.x = 1.0f;
         }
+        else if (poleState && !poleState->IsPauseCompleted()) {
+            SetImage(m_State->GetIdleImage());
+            m_Transform.scale.x = 1.0f;
+        }
         else if (poleState) {
             m_Transform.scale.x = 1.0f;
-            float animSpeed = std::abs(m_Velocity.x) / 150.0f;
-            m_AnimTimer += deltaTime * animSpeed;
+            m_AnimTimer += deltaTime;
             auto frames = m_State->GetRunImages();
             if (!frames.empty()) {
-                int frameIndex = static_cast<int>(m_AnimTimer * 5.0f) % frames.size();
+                int frameIndex = static_cast<int>(m_AnimTimer * 8.0f) % frames.size();
                 SetImage(frames[frameIndex]);
             }
         }
@@ -233,6 +236,12 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             }
             return res;
         }
+        else if (!poleState->IsPauseCompleted()) {
+            poleState->TickPause(deltaTime);
+            auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
+            m_Velocity.x = 0.0f;
+            return res;
+        }
         else {
             auto res = Character::UpdatePhysics(deltaTime, 1.0f, false, false, blocks);
             m_Velocity.x = poleState->GetWalkSpeed();
@@ -247,13 +256,29 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
         if (!pipeState->IsDownReached()) {
             glm::vec2 pos = GetPosition();
-            pos.y -= pipeState->GetSlideSpeed() * deltaTime;
-            SetPosition(pos);
-            m_Velocity = { 0.0f, -pipeState->GetSlideSpeed() };
+            const float speed = pipeState->GetSlideSpeed();
 
-            if (pos.y <= pipeState->GetTargetY()) {
-                pipeState->SetDownReached(true);
+            switch (pipeState->GetSlideDir()) {
+            case PipeSlideState::SlideDir::Down:
+                pos.y -= speed * deltaTime;
+                m_Velocity = { 0.0f, -speed };
+                if (pos.y <= pipeState->GetTarget())
+                    pipeState->SetDownReached(true);
+                break;
+            case PipeSlideState::SlideDir::Right:
+                pos.x += speed * deltaTime;
+                m_Velocity = { speed, 0.0f };
+                if (pos.x >= pipeState->GetTarget())
+                    pipeState->SetDownReached(true);
+                break;
+            case PipeSlideState::SlideDir::Left:
+                pos.x -= speed * deltaTime;
+                m_Velocity = { -speed, 0.0f };
+                if (pos.x <= pipeState->GetTarget())
+                    pipeState->SetDownReached(true);
+                break;
             }
+            SetPosition(pos);
         }
         return { 0.0f, 0.0f };
     }

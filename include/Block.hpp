@@ -12,6 +12,8 @@ class Item;
 
 class Block : public Util::GameObject {
 public:
+    enum class PipeEntryDir { Down, Right, Left };
+
     explicit Block(const std::string& imagePath) {
         SetImage(imagePath);
     }
@@ -65,6 +67,7 @@ public:
     virtual float GetVelocityY() const { return 0.0f; }
     virtual bool IsCollidable() const { return true; }
     virtual bool IsXCollidable() const { return true; }
+    virtual PipeEntryDir GetPipeEntryDir() const { return PipeEntryDir::Down; }
 
 protected:
     std::string m_ImagePath;

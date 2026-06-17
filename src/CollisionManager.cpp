@@ -133,7 +133,7 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
                 float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
                 bool canBeStomped = enemy->IsStompable();
 
-                if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 8.0f && canBeStomped) {
+                if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 16.0f && canBeStomped) {
                     enemy->OnStomped(mario);
                     mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
                     mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });

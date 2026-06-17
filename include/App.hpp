@@ -76,6 +76,8 @@ private:
 
     int m_CurrentLevel = 0;
     float m_CameraX = 0.0f;
+    float m_CameraY = 0.0f;     // world-space Y offset applied to all render positions
+    bool  m_CameraLocked = false; // when true, camera X does not follow Mario
 };
 
 #endif //APP_HPP
