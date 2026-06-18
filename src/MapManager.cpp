@@ -182,25 +182,10 @@ void MapManager::LoadMap(const std::string& filePath,
                 outBlocks.push_back(prop);
                 break;
             }
-                // Bush leaves (top row)
-            case '[': {
-                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_left.png");
-                prop->SetPosition(pos);
-                outBlocks.push_back(prop);
-                break;
-            }
-            case '-': {
-                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_middle.png");
-                prop->SetPosition(pos);
-                outBlocks.push_back(prop);
-                break;
-            }
-            case ']': {
-                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_right.png");
-                prop->SetPosition(pos);
-                outBlocks.push_back(prop);
-                break;
-            }
+                // Bush leaves (top row) — collidable so Mario can stand on them
+            case '[': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/leaf_left.png")); break;
+            case '-': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/leaf_middle.png")); break;
+            case ']': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/leaf_right.png")); break;
                 // Bush logs (bottom row)
             case '{': {
                 auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/log_left.png");

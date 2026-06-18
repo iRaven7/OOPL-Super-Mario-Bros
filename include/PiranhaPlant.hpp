@@ -43,6 +43,15 @@ public:
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& /*blocks*/) override {
         if (!m_IsActive) return;
 
+        m_AnimTimer += deltaTime;
+
+        // Cycle mouth-open / mouth-closed frames while visible.
+        if (m_State != State::Hiding) {
+            int frame = static_cast<int>(m_AnimTimer * 4.0f) % 2;
+            SetImage(frame == 0 ? RESOURCE_DIR"/Entities/PiranhaPlant/piranha_plant.png"
+                                : RESOURCE_DIR"/Entities/PiranhaPlant/piranha_plant1.png");
+        }
+
         switch (m_State) {
         case State::Hiding:
             m_WaitTimer -= deltaTime;
@@ -95,13 +104,14 @@ private:
     }
 
     State m_State;
-    float m_MoveSpeed = 35.0f;
-    float m_HideY = 0.0f;
-    float m_ExposeY = 0.0f;
+    float m_MoveSpeed    = 35.0f;
+    float m_HideY        = 0.0f;
+    float m_ExposeY      = 0.0f;
 
-    float m_WaitTimer = 0.0f;
+    float m_WaitTimer    = 0.0f;
     float m_HideDuration = 2.0f;
     float m_ExposeDuration = 2.0f;
+    float m_AnimTimer    = 0.0f;
 };
 
 #endif // PIRANHA_PLANT_HPP

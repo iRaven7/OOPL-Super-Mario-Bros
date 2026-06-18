@@ -4,7 +4,6 @@
 #include "Enemy.hpp"
 #include "Mario.hpp"
 #include "Util/Logger.hpp"
-#include "Util/Image.hpp"
 
 class Koopa : public Enemy {
 public:
@@ -44,6 +43,27 @@ public:
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
         if (!m_IsActive) return;
 
+        m_AnimTimer += deltaTime;
+        switch (m_State) {
+        case State::Walking: {
+            int frame = static_cast<int>(m_AnimTimer * 8.0f) % 2;
+            SetImage(frame == 0 ? RESOURCE_DIR"/Entities/Koopa/koopa1.png"
+                                : RESOURCE_DIR"/Entities/Koopa/koopa2.png");
+            break;
+        }
+        case State::ShellMoving: {
+            static const char* spinFrames[] = {
+                RESOURCE_DIR"/Entities/Koopa/koopa_spinning1.png",
+                RESOURCE_DIR"/Entities/Koopa/koopa_spinning2.png",
+                RESOURCE_DIR"/Entities/Koopa/koopa_spinning3.png"
+            };
+            SetImage(spinFrames[static_cast<int>(m_AnimTimer * 15.0f) % 3]);
+            break;
+        }
+        case State::ShellIdle:
+            break; // static shell.png set in OnStomped
+        }
+
         if (m_State == State::ShellIdle) {
             UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
             m_Velocity.x = 0.0f;
@@ -70,7 +90,7 @@ public:
             m_State = State::ShellIdle;
             m_Velocity.x = 0.0f;
 
-            SetDrawable(std::make_shared<Util::Image>(RESOURCE_DIR"/Entities/Koopa/shell.png"));
+            SetImage(RESOURCE_DIR"/Entities/Koopa/shell.png");
 
             LOG_INFO("Koopa entered shell state");
         }
@@ -104,6 +124,7 @@ public:
 private:
     void KickShell(Character* hitter) {
         m_State = State::ShellMoving;
+        m_AnimTimer = 0.0f;
 
         if (hitter->GetPosition().x < GetPosition().x) {
             m_Velocity.x = m_ShellSpeed;
@@ -115,8 +136,9 @@ private:
     }
 
     State m_State;
-    float m_WalkSpeed = 35.0f;
+    float m_WalkSpeed  = 35.0f;
     float m_ShellSpeed = 200.0f;
+    float m_AnimTimer  = 0.0f;
 };
 
 #endif // KOOPA_HPP
