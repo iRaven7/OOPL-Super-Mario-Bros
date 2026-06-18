@@ -6,6 +6,7 @@
 #include "Goomba.hpp"
 #include "UnbreakableBlock.hpp"
 #include "Koopa.hpp"
+#include "FlyingKoopa.hpp"
 #include "PiranhaPlant.hpp"
 #include "BackgroundProp.hpp"
 #include "Flag.hpp"
@@ -121,24 +122,46 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'E': addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 2)); break;
             case 'e': addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png", 0)); break;
 
-                // '>' : horizontal right-entry pipe (uses subMapLevel/subMapSpawnX)
-                // '<' : horizontal left-entry  pipe (uses parentLevel/returnSpawnX)
+                // Horizontal warp pipes — direction-named tile characters:
+                //   R / r  : right-facing mouth  (Mario stands left, presses RIGHT to enter)
+                //             R → sub-map (subMapLevel),  r → parent (parentLevel)
+                //   L      : left-facing mouth   (Mario stands right, presses LEFT to enter)
+                //             L → sub-map (subMapLevel)
+                //   '>' / '<' kept as aliases for R / L (backwards-compat, same behaviour)
+                // Sprites:
+                //   pipe_dl_rotate.png = top tile of a right-facing opening (mouth on left edge)
+                //   pipe_dr_rotate.png = bottom tile of a right-facing opening
+                //   Left-facing variants use the same sprites with flipX=true
+            case 'R':
             case '>':
                 if (pipeConfig.subMapLevel >= 0)
-                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_dl_rotate.png",
                         pipeConfig.subMapLevel, pipeConfig.subMapSpawnX,
                         Block::PipeEntryDir::Right));
                 break;
+            case 'r':
+                if (pipeConfig.parentLevel >= 0)
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_dl_rotate.png",
+                        pipeConfig.parentLevel, pipeConfig.returnSpawnX,
+                        Block::PipeEntryDir::Right));
+                break;
+            case 'L':
+                if (pipeConfig.subMapLevel >= 0)
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_dl_rotate.png",
+                        pipeConfig.subMapLevel, pipeConfig.subMapSpawnX,
+                        Block::PipeEntryDir::Left, true));
+                break;
             case '<':
                 if (pipeConfig.parentLevel >= 0)
-                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_tl.png",
+                    addPipe(std::make_shared<EnterablePipe>(RESOURCE_DIR"/Blocks/pipe_dl_rotate.png",
                         pipeConfig.parentLevel, pipeConfig.returnSpawnX,
-                        Block::PipeEntryDir::Left));
+                        Block::PipeEntryDir::Left, true));
                 break;
 
                 // --- enemies ---
             case '4': outEnemies.push_back(std::make_shared<Goomba>(pos)); break;
             case '5': outEnemies.push_back(std::make_shared<Koopa>(pos)); break;
+            case '6': outEnemies.push_back(std::make_shared<FlyingKoopa>(pos)); break;
             case 'P': outEnemies.push_back(std::make_shared<PiranhaPlant>(pos)); break;
 
                 // --- flag pole ---

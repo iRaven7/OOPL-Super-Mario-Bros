@@ -26,6 +26,9 @@ public:
 
     void SetCrouching(bool crouching);
     [[nodiscard]] bool IsCrouching() const { return m_IsCrouching; }
+    // True if the full standing hitbox is clear of solid blocks, i.e. Mario may
+    // rise from a crouch without clipping into a block directly above his head.
+    [[nodiscard]] bool CanStandUp(const std::vector<std::shared_ptr<Block>>& blocks) const;
 
     [[nodiscard]] glm::vec2 GetSize() const override;
 

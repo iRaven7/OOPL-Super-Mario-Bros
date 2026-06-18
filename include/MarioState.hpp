@@ -34,6 +34,7 @@ public:
     std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario_jump.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario_skid.png"; }
+    std::string GetSlideImage() const override { return RESOURCE_DIR"/Entities/LittleMario/slide.png"; }
     std::vector<std::string> GetRunImages() const override {
         return { RESOURCE_DIR"/Entities/LittleMario/mario_run3.png", RESOURCE_DIR"/Entities/LittleMario/mario_run1.png" };
     }
@@ -48,6 +49,7 @@ public:
     std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_crouch.png"; }
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_jump.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario_skid.png"; }
+    std::string GetSlideImage() const override { return RESOURCE_DIR"/Entities/BigMario/big_slide.png"; }
     std::vector<std::string> GetRunImages() const override {
         return { RESOURCE_DIR"/Entities/BigMario/mario_run3.png", RESOURCE_DIR"/Entities/BigMario/mario_run1.png" };
     }
@@ -63,6 +65,7 @@ public:
     std::string GetJumpImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_jump.png"; }
     std::string GetSkidImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_skid.png"; }
     std::string GetCrouchImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/mario_crouch.png"; }
+    std::string GetSlideImage() const override { return RESOURCE_DIR"/Entities/FireflowerMario/fire_slide.png"; }
     std::vector<std::string> GetRunImages() const override {
         return { RESOURCE_DIR"/Entities/FireflowerMario/mario_run3.png", RESOURCE_DIR"/Entities/FireflowerMario/mario_run1.png" };
     }

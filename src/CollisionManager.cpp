@@ -9,6 +9,8 @@
 #include "GameStateManager.hpp"
 #include "Util/Logger.hpp"
 #include <cmath>
+#include <algorithm>
+#include <vector>
 
 bool CollisionManager::CheckAABB(const glm::vec2& posA, const glm::vec2& sizeA, const glm::vec2& posB, const glm::vec2& sizeB) const {
     return std::abs(posA.x - posB.x) < (sizeA.x + sizeB.x) / 2.0f &&
@@ -116,32 +118,55 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
     glm::vec2 marioPos = mario->GetPosition();
     glm::vec2 marioSize = mario->GetSize();
 
+    // Capture the descent velocity ONCE up front. Stomping an enemy sets vy to +600,
+    // so reading the live velocity inside the loop would mis-classify a second
+    // adjacent enemy (e.g. landing between two Goombas) as a side hit → false damage.
+    float initialVelY = mario->GetVelocity().y;
+    float marioBottom = marioPos.y - (marioSize.y / 2.0f);
+
+    bool stomped = false;
+    float highestStompTop = -1.0e9f;
+    std::vector<Enemy*> sideHits;
+
     for (auto& enemy : enemies) {
         if (!enemy->IsActive()) continue;
 
         glm::vec2 enemyPos = enemy->GetPosition();
         glm::vec2 enemySize = enemy->GetSize();
 
-        if (CheckAABB(marioPos, marioSize, enemyPos, enemySize)) {
-            if (mario->IsStarPowered()) {
-                enemy->OnFireballHit();
-                mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
-                GameStateManager::GetInstance().AddScore(100);
-            }
-            else {
-                float marioBottom = marioPos.y - (marioSize.y / 2.0f);
-                float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
-                bool canBeStomped = enemy->IsStompable();
+        if (!CheckAABB(marioPos, marioSize, enemyPos, enemySize)) continue;
 
-                if (mario->GetVelocity().y < 0.0f && marioBottom >= enemyTop - 16.0f && canBeStomped) {
-                    enemy->OnStomped(mario);
-                    mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
-                    mario->SetPosition({ marioPos.x, enemyTop + (marioSize.y / 2.0f) + 1.0f });
-                }
-                else {
-                    enemy->OnSideCollision(mario);
-                }
-            }
+        if (mario->IsStarPowered()) {
+            enemy->OnFireballHit();
+            mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
+            GameStateManager::GetInstance().AddScore(100);
+            continue;
+        }
+
+        float enemyTop = enemyPos.y + (enemySize.y / 2.0f);
+        bool canBeStomped = enemy->IsStompable();
+
+        if (initialVelY < 0.0f && marioBottom >= enemyTop - 16.0f && canBeStomped) {
+            enemy->OnStomped(mario);
+            stomped = true;
+            highestStompTop = std::max(highestStompTop, enemyTop);
+        }
+        else {
+            sideHits.push_back(enemy.get());
+        }
+    }
+
+    if (stomped) {
+        // One bounce that clears the highest enemy stomped this frame.
+        mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
+        mario->SetPosition({ marioPos.x, highestStompTop + (marioSize.y / 2.0f) + 1.0f });
+    }
+
+    // Suppress side collisions on any frame Mario stomped something — otherwise a
+    // second enemy he landed on/next to would still deal damage in the same frame.
+    if (!stomped) {
+        for (Enemy* e : sideHits) {
+            e->OnSideCollision(mario);
         }
     }
 }

@@ -59,23 +59,20 @@ public:
         case State::Hiding:
             m_WaitTimer -= deltaTime;
             if (m_WaitTimer <= 0.0f) {
-                // Don't emerge if the player is within 1 block directly above the pipe.
-                // Pipe center X = plant X + 8 (plant is placed at the left pipe tile).
-                // Pipe top Y   = m_ExposeY + 8 (top edge of the entrance tile).
-                float pipeCenterX = m_WorldPosition.x + 8.0f;
-                float pipeTopY    = m_ExposeY + 8.0f;
-                float marioFeetY  = m_PlayerPos.y - 8.0f;  // approx bottom of hitbox
-                bool blocked = std::abs(m_PlayerPos.x - pipeCenterX) < 24.0f
-                            && marioFeetY >= pipeTopY
-                            && marioFeetY <= pipeTopY + 16.0f;
-                if (blocked) {
-                    m_WaitTimer = 0.5f;  // re-check after a short delay
+                if (IsMarioBlockingPipe()) {
+                    m_WaitTimer = 0.3f;  // stay hidden, re-check shortly
                 } else {
                     m_State = State::Emerging;
                 }
             }
             break;
         case State::Emerging:
+            // If Mario hops onto the pipe mid-rise, duck back down instead of
+            // shoving him / dealing a hit.
+            if (IsMarioBlockingPipe()) {
+                m_State = State::Retracting;
+                break;
+            }
             m_WorldPosition.y += m_MoveSpeed * deltaTime;
             if (m_WorldPosition.y >= m_ExposeY) {
                 m_WorldPosition.y = m_ExposeY;
@@ -112,6 +109,17 @@ public:
     }
 
 private:
+    // True when Mario is standing on / hovering just above this plant's pipe mouth,
+    // so the plant must not pop up. m_WorldPosition.x is the true pipe center; Mario's
+    // standing center sits roughly between m_ExposeY and m_ExposeY+8 (pipe-top surface),
+    // while ground-level Mario nearby is well below m_ExposeY-16.
+    bool IsMarioBlockingPipe() const {
+        bool horizontallyOver = std::abs(m_PlayerPos.x - m_WorldPosition.x) < 20.0f;
+        bool abovePipeMouth   = m_PlayerPos.y > (m_ExposeY - 16.0f)
+                             && m_PlayerPos.y < (m_ExposeY + 48.0f);
+        return horizontallyOver && abovePipeMouth;
+    }
+
     void DealDamageToMario(Character* hitter) {
         Mario* mario = dynamic_cast<Mario*>(hitter);
         if (mario) {

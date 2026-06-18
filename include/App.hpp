@@ -38,6 +38,16 @@ private:
     void UpdateUI();
     void TriggerLevelTransition();       // Ĳ�o�L�����禡
     void TriggerDeath();
+
+    // --- Level-2 intro cutscene ---
+    // After World 1-1 is cleared the game loads the `level2_animation` scene,
+    // where Mario first slides into a pipe, then walks across to a second pipe
+    // before the real level 2 begins.
+    enum class CutscenePhase { None, EnterPipe, Walk };
+    void StartLevel2Cutscene();
+    void UpdateCutscene(float deltaTime);
+    CutscenePhase m_CutscenePhase = CutscenePhase::None;
+    float m_CutsceneWalkEndX = 0.0f;
     bool m_IsTransitioning = false;
     bool m_IsDeadTransition = false;
     float m_LevelTransitionTimer = 0.0f;

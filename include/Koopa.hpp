@@ -25,16 +25,17 @@ public:
         SetZIndex(35);
     }
 
-    // Walking sprite is 16x32; shell sprites are 16x16 — hitbox matches in both cases.
+    // Hitbox height is a fixed 24px in every state (walking and shell alike).
     glm::vec2 GetSize() const override {
-        if (m_State == State::Walking)
-            return { 12.0f, 32.0f };
-        return { 12.0f, 16.0f };
+        return { 12.0f, 24.0f };
     }
 
     void UpdateRenderPosition(float cameraX, float cameraZoom) override {
+        // Lift the sprite ~4px above the hitbox centre so the taller koopa art
+        // sits correctly on the ground (purely visual; hitbox is unchanged).
+        constexpr float kSpriteYOffset = 4.0f;
         m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
-        m_Transform.translation.y = m_WorldPosition.y * cameraZoom;
+        m_Transform.translation.y = (m_WorldPosition.y + kSpriteYOffset) * cameraZoom;
 
         float direction = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
         m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;
@@ -43,6 +44,8 @@ public:
 
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) override {
         if (!m_IsActive) return;
+
+        if (m_KickGraceTimer > 0.0f) m_KickGraceTimer -= deltaTime;
 
         m_AnimTimer += deltaTime;
         switch (m_State) {
@@ -110,8 +113,15 @@ public:
 
         Mario* mario = dynamic_cast<Mario*>(hitter);
 
-        if (m_State == State::Walking || m_State == State::ShellMoving) {
+        if (m_State == State::Walking) {
             if (mario) {
+                mario->TakeDamage();
+            }
+        }
+        else if (m_State == State::ShellMoving) {
+            // Grace window right after a kick: Mario (especially at sprint speed)
+            // is still overlapping the shell he just kicked — don't punish him for it.
+            if (m_KickGraceTimer <= 0.0f && mario) {
                 mario->TakeDamage();
             }
         }
@@ -126,20 +136,30 @@ private:
     void KickShell(Character* hitter) {
         m_State = State::ShellMoving;
         m_AnimTimer = 0.0f;
+        m_KickGraceTimer = m_KickGrace;
 
-        if (hitter->GetPosition().x < GetPosition().x) {
+        // Push the shell clear of Mario's hitbox in the kick direction so it can't
+        // re-collide as a "moving shell" on the very next frame.
+        float clearance = (hitter->GetSize().x + GetSize().x) / 2.0f + 2.0f;
+        glm::vec2 hitterPos = hitter->GetPosition();
+
+        if (hitterPos.x < GetPosition().x) {
             m_Velocity.x = m_ShellSpeed;
+            SetPosition({ hitterPos.x + clearance, GetPosition().y });
         }
         else {
             m_Velocity.x = -m_ShellSpeed;
+            SetPosition({ hitterPos.x - clearance, GetPosition().y });
         }
         LOG_INFO("Shell kicked!");
     }
 
     State m_State;
-    float m_WalkSpeed  = 35.0f;
-    float m_ShellSpeed = 200.0f;
-    float m_AnimTimer  = 0.0f;
+    float m_WalkSpeed       = 35.0f;
+    float m_ShellSpeed      = 200.0f;
+    float m_AnimTimer       = 0.0f;
+    float m_KickGraceTimer  = 0.0f;
+    float m_KickGrace       = 0.25f;  // seconds of no-damage right after a kick
 };
 
 #endif // KOOPA_HPP

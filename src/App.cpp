@@ -132,6 +132,12 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
             cfg.backgroundPath = "";
             break;
 
+        case 20:  // Level-2 intro cutscene: Mario enters a pipe, then walks to
+                  // the next pipe. Driven by Update/StartLevel2Cutscene, not by
+                  // normal gameplay. Uses the default sky background + castle prop.
+            cfg.mapPath = RESOURCE_DIR"/Map/level2_animation.txt";
+            break;
+
         // Add case 3, case 13 … here for future levels
         default:
             cfg.mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
@@ -191,6 +197,14 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
                 m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
             }
         }
+    }
+
+    // The level-2 intro scene immediately hands control to the scripted cutscene.
+    if (level == 20) {
+        StartLevel2Cutscene();
+    }
+    else {
+        m_CutscenePhase = CutscenePhase::None;
     }
 
     LOG_INFO("Level loaded: {}", level);
@@ -275,12 +289,20 @@ void App::Update() {
                 }
             }
             else {
+                // NOTE: the level-2 intro cutscene (level 20 / StartLevel2Cutscene)
+                // is on hold — clearing 1-1 loads the real level 2 directly.
                 LoadLevel(m_CurrentLevel + 1);
             }
         }
         UpdateUI();
         UpdateCamera();
         m_Root.Update();
+        return;
+    }
+
+    // Scripted level-2 intro cutscene takes over the whole frame while active.
+    if (m_CutscenePhase != CutscenePhase::None) {
+        UpdateCutscene(deltaTime);
         return;
     }
 
@@ -337,7 +359,10 @@ void App::Update() {
                 if (!wantsCrouch || !m_Mario->IsGrounded()) continue;
                 float pipeCenterX = blockPos.x + 8.0f;   // pipe is 2 tiles wide
                 float pipeTopY    = blockPos.y + 8.0f;   // top face of entrance tile
-                if (std::abs(marioPos.x - pipeCenterX) < 20.0f &&
+                // Tolerance < 12 keeps Mario's center well inside the 32px-wide pipe span
+                // (pipeCenterX ± 16). The old 20px window let him trigger while mostly over
+                // the neighbouring tile, then snapped him a full tile sideways to the center.
+                if (std::abs(marioPos.x - pipeCenterX) < 12.0f &&
                     std::abs((marioPos.y - marioSize.y / 2.0f) - pipeTopY) < 8.0f) {
                     m_Mario->ChangeState(std::make_unique<PipeSlideState>(
                         isBig, PipeSlideState::SlideDir::Down,
@@ -396,6 +421,12 @@ void App::Update() {
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks, isJumpHeld);
+
+    // Block standing up while a solid block is directly overhead — Mario must
+    // stay crouched instead of clipping through it.
+    if (m_Mario->IsCrouching() && !wantsCrouch && !m_Mario->CanStandUp(m_CurrentMapBlocks)) {
+        wantsCrouch = true;
+    }
     m_Mario->SetCrouching(wantsCrouch);
 
     if (wantsFire) m_Mario->Shoot();
@@ -522,6 +553,97 @@ void App::TriggerDeath() {
 void App::TriggerLevelTransition() {
     m_IsTransitioning = true;
     m_LevelTransitionTimer = 2.0f;
+}
+
+// ---------------------------------------------------------------------------
+// Level-2 intro cutscene
+//
+// Map = level2_animation.txt (BLOCK_SIZE 16, origin startX=-300, startY=200).
+// Vertical pipe occupies grid columns 13-14 (0-based) → world centre x = -84,
+// pipe top face at world y = -128. The floor rows put a standing Mario centre
+// at y = -184. The walk runs along row 25 (1-based) from column 4 (world x
+// -252, by the castle) to column 13 (world x -108, the second pipe mouth).
+//
+// Phase 1 (EnterPipe): Mario sits on top of the vertical pipe and slides down
+//   into it (reusing PipeSlideState's downward slide + behind-pipe z-index).
+// Phase 2 (Walk): Mario is repositioned to the castle side and walks right to
+//   the pipe; reaching it loads the real level 2.
+// ---------------------------------------------------------------------------
+void App::StartLevel2Cutscene() {
+    m_CutscenePhase = CutscenePhase::EnterPipe;
+
+    bool isBig = m_Mario->GetSize().y > 16.0f;
+
+    const float pipeCenterX     = -84.0f;   // columns 13-14 centre
+    const float pipeTopStandY   = -120.0f;  // pipe top face (-128) + 8
+
+    m_Mario->SetVisible(true);
+    m_Mario->SetVelocity({ 0.0f, 0.0f });
+    m_Mario->SetPosition({ pipeCenterX, pipeTopStandY });
+    // Slide ~3 tiles down so Mario disappears behind the pipe. The target level
+    // argument is unused — UpdateCutscene drives the next load itself.
+    m_Mario->ChangeState(std::make_unique<PipeSlideState>(
+        isBig, PipeSlideState::SlideDir::Down, pipeTopStandY - 48.0f, 2), false);
+}
+
+void App::UpdateCutscene(float deltaTime) {
+    for (auto& block : m_CurrentMapBlocks) {
+        block->Update(deltaTime);
+    }
+    m_Mario->Update(deltaTime);
+
+    if (m_CutscenePhase == CutscenePhase::EnterPipe) {
+        m_Mario->UpdateAnimation(deltaTime, 0.0f);
+        m_Mario->UpdatePhysics(deltaTime, 0.0f, false, false, m_CurrentMapBlocks);
+
+        if (auto pipe = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
+            if (pipe->IsDownReached()) {
+                // Pipe entry done — reposition to the castle side and start walking.
+                bool isBig = m_Mario->GetSize().y > 16.0f;
+                const float walkStartX = -252.0f;  // column 4  (1-based)
+                m_CutsceneWalkEndX     = -108.0f;  // column 13 (1-based)
+                const float standY     = -184.0f;  // floor top (-192) + 8
+
+                m_Mario->ChangeState(isBig
+                    ? std::unique_ptr<MarioState>(std::make_unique<BigMarioState>())
+                    : std::unique_ptr<MarioState>(std::make_unique<SmallMarioState>()),
+                    false);
+                m_Mario->SetZIndex(50);
+                m_Mario->SetVisible(true);
+                m_Mario->SetPosition({ walkStartX, standY });
+                m_Mario->SetVelocity({ 0.0f, 0.0f });
+                m_CutscenePhase = CutscenePhase::Walk;
+            }
+        }
+    }
+    else if (m_CutscenePhase == CutscenePhase::Walk) {
+        // Scripted constant-speed walk (bypasses collision so Mario reaches the
+        // pipe mouth exactly, undisturbed by the pipe's own collision blocks).
+        const float walkSpeed = 150.0f;
+        glm::vec2 pos = m_Mario->GetPosition();
+        pos.x += walkSpeed * deltaTime;
+
+        bool done = false;
+        if (pos.x >= m_CutsceneWalkEndX) {
+            pos.x = m_CutsceneWalkEndX;
+            done = true;
+        }
+
+        m_Mario->SetPosition(pos);
+        m_Mario->SetVelocity({ walkSpeed, 0.0f });
+        m_Mario->SetGrounded(true);
+        m_Mario->UpdateAnimation(deltaTime, 1.0f);
+
+        if (done) {
+            m_CutscenePhase = CutscenePhase::None;
+            LoadLevel(2);
+            return;
+        }
+    }
+
+    UpdateUI();
+    UpdateCamera();
+    m_Root.Update();
 }
 
 void App::End() {

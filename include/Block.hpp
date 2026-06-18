@@ -12,7 +12,7 @@ class Item;
 
 class Block : public Util::GameObject {
 public:
-    enum class PipeEntryDir { Down, Right, Left };
+    enum class PipeEntryDir { Down, Right, Left, Up };
 
     // What item this block holds; NONE means no contents.
     enum class ContentType { NONE, MUSHROOM, COIN, FIREFLOWER, ONEUP, STAR, SUPERFLOWER };

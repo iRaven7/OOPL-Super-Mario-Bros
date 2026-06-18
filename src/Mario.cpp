@@ -3,6 +3,7 @@
 #include "GameStateManager.hpp"
 #include "Util/Logger.hpp"
 #include "Constants.hpp"
+#include "Block.hpp"
 
 Mario::Mario() : Character(RESOURCE_DIR"/Entities/LittleMario/mario.png") {
     SetZIndex(50);
@@ -42,6 +43,33 @@ void Mario::SetCrouching(bool crouching) {
             m_WorldPosition.y += 8.0f;
         }
     }
+}
+
+bool Mario::CanStandUp(const std::vector<std::shared_ptr<Block>>& blocks) const {
+    if (!m_State) return true;
+
+    // Only big / fire Mario grows taller when standing; small Mario's hitbox
+    // never changes, so it can always rise.
+    glm::vec2 standSize = m_State->GetHitboxSize();
+    if (standSize.y <= 16.0f) return true;
+
+    // The standing hitbox sits 8px higher than the crouched one (mirrors the
+    // shift in SetCrouching). Shrink it slightly so the floor below and blocks
+    // flush against Mario's sides aren't mistaken for an obstruction overhead.
+    glm::vec2 standCenter = m_WorldPosition;
+    if (m_IsCrouching) standCenter.y += 8.0f;
+    glm::vec2 hitbox = { standSize.x - 0.4f, standSize.y - 0.5f };
+
+    for (const auto& block : blocks) {
+        if (!block->IsActive() || !block->IsCollidable()) continue;
+        glm::vec2 bPos  = block->GetCollisionPosition();
+        glm::vec2 bSize = block->GetSize();
+        if (std::abs(standCenter.x - bPos.x) < (hitbox.x + bSize.x) / 2.0f &&
+            std::abs(standCenter.y - bPos.y) < (hitbox.y + bSize.y) / 2.0f) {
+            return false;
+        }
+    }
+    return true;
 }
 
 glm::vec2 Mario::GetSize() const {
@@ -111,7 +139,14 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
     }
 
     if (newState == AnimState::CROUCH) {
-        SetImage(m_State->GetCrouchImage());
+        // Crouch-slide: keep sliding (with retained facing) while there is still
+        // horizontal momentum, then settle into the static crouch pose.
+        if (m_IsGrounded && std::abs(m_Velocity.x) > 40.0f) {
+            SetImage(m_State->GetSlideImage());
+        }
+        else {
+            SetImage(m_State->GetCrouchImage());
+        }
     }
     else if (newState == AnimState::JUMP) {
         SetImage(m_State->GetJumpImage());
