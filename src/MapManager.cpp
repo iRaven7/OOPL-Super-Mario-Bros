@@ -44,12 +44,12 @@ void MapManager::LoadMap(const std::string& filePath,
 
             auto addBlock = [&](const std::shared_ptr<Block>& block) {
                 block->SetPosition(pos);
-                block->SetZIndex(10);
+                block->SetZIndex(60);   // above Mario (50) and all items
                 outBlocks.push_back(block);
             };
             auto addPipe = [&](const std::shared_ptr<Block>& block) {
                 block->SetPosition(pos);
-                block->SetZIndex(55);
+                block->SetZIndex(65);   // pipes in front of regular blocks
                 outBlocks.push_back(block);
             };
 
@@ -65,19 +65,19 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'B': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png")); break;
             case 'n': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/building_blue.png")); break;
 
-                // 'f' = upward-moving platform, 'h' = downward-moving platform
-                // Place tile at col X; leave the next 6 columns as '0' in the map.
-                // Collision: one 112x16 AABB. Rendering: 7 VisualTile children.
+                // 'f' = upward-moving platform (wraps), 'h' = downward-moving (wraps),
+                // 'z' = gentle float up-and-down (oscillates ±2 blocks around placed Y).
+                // Place one tile at the desired position; the platform sprite is 64px wide.
             case 'f':
-            case 'h': {
+            case 'h':
+            case 'z': {
                 auto dir = (tileType == 'f') ? MovingPlatform::Direction::UP
-                                             : MovingPlatform::Direction::DOWN;
+                         : (tileType == 'h') ? MovingPlatform::Direction::DOWN
+                                             : MovingPlatform::Direction::FLOAT;
                 auto plat = std::make_shared<MovingPlatform>(dir);
                 plat->SetPosition(pos);
                 plat->SetZIndex(10);
                 outBlocks.push_back(plat);
-                for (auto& tile : plat->GetVisualTiles())
-                    outBlocks.push_back(tile);
                 break;
             }
 

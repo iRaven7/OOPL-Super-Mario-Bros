@@ -25,15 +25,16 @@ public:
         SetZIndex(35);
     }
 
+    // Walking sprite is 16x32; shell sprites are 16x16 — hitbox matches in both cases.
+    glm::vec2 GetSize() const override {
+        if (m_State == State::Walking)
+            return { 12.0f, 32.0f };
+        return { 12.0f, 16.0f };
+    }
+
     void UpdateRenderPosition(float cameraX, float cameraZoom) override {
-        float yOffset = 0.0f;
-
-        if (m_State == State::Walking) {
-            yOffset = 8.0f;
-        }
-
         m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
-        m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
+        m_Transform.translation.y = m_WorldPosition.y * cameraZoom;
 
         float direction = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
         m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;

@@ -40,6 +40,9 @@ public:
         m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
+    // Called by App each frame before UpdateAI so the plant knows where the player is.
+    void SetPlayerPos(const glm::vec2& pos) { m_PlayerPos = pos; }
+
     void UpdateAI(float deltaTime, const std::vector<std::shared_ptr<Block>>& /*blocks*/) override {
         if (!m_IsActive) return;
 
@@ -56,7 +59,20 @@ public:
         case State::Hiding:
             m_WaitTimer -= deltaTime;
             if (m_WaitTimer <= 0.0f) {
-                m_State = State::Emerging;
+                // Don't emerge if the player is within 1 block directly above the pipe.
+                // Pipe center X = plant X + 8 (plant is placed at the left pipe tile).
+                // Pipe top Y   = m_ExposeY + 8 (top edge of the entrance tile).
+                float pipeCenterX = m_WorldPosition.x + 8.0f;
+                float pipeTopY    = m_ExposeY + 8.0f;
+                float marioFeetY  = m_PlayerPos.y - 8.0f;  // approx bottom of hitbox
+                bool blocked = std::abs(m_PlayerPos.x - pipeCenterX) < 24.0f
+                            && marioFeetY >= pipeTopY
+                            && marioFeetY <= pipeTopY + 16.0f;
+                if (blocked) {
+                    m_WaitTimer = 0.5f;  // re-check after a short delay
+                } else {
+                    m_State = State::Emerging;
+                }
             }
             break;
         case State::Emerging:
@@ -102,6 +118,8 @@ private:
             mario->TakeDamage();
         }
     }
+
+    glm::vec2 m_PlayerPos = { -99999.0f, -99999.0f };
 
     State m_State;
     float m_MoveSpeed    = 35.0f;

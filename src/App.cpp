@@ -5,6 +5,7 @@
 #include "Util/Time.hpp"
 #include "GameStateManager.hpp"
 #include "MarioState.hpp"
+#include "PiranhaPlant.hpp"
 #include <iomanip>
 #include <sstream>
 
@@ -425,7 +426,10 @@ void App::Update() {
     }
 
     for (auto& enemy : m_Enemies) {
-        if (enemy->IsActive()) enemy->UpdateAI(deltaTime, m_CurrentMapBlocks);
+        if (!enemy->IsActive()) continue;
+        if (auto piranha = dynamic_cast<PiranhaPlant*>(enemy.get()))
+            piranha->SetPlayerPos(m_Mario->GetPosition());
+        enemy->UpdateAI(deltaTime, m_CurrentMapBlocks);
     }
 
     m_CollisionManager.ProcessInteractions(m_Mario.get(), m_CurrentMapBlocks, m_Items, m_Enemies, m_Fireballs);
