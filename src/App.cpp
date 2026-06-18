@@ -88,6 +88,9 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
         float          cameraY      = 0.0f;
         // Empty string = no background object; the renderer clear color (black) shows through.
         std::string    backgroundPath = RESOURCE_DIR"/Blocks/sky.png";
+        // Default spawn X used when LoadLevel is called without an explicit spawnX.
+        // Corresponds to the leftmost column of the map (-300) unless overridden.
+        float          defaultSpawnX = -300.0f;
     };
 
     LevelConfig cfg;
@@ -98,7 +101,7 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
 
         case 1:   // World 1-1
             cfg.mapPath      = RESOURCE_DIR"/Map/level1.txt";
-            cfg.pipes        = { 11, -196.0f, -1, 0.0f };
+            cfg.pipes        = { 11, -284.0f, -1, 0.0f };  // pipe1 spawn: col 2
             break;
 
         case 11:  // Sub-map for level 1 (pipe1) — underground, solid black background
@@ -113,8 +116,9 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
 
         case 2:   // World 1-2 (underground) — solid black background
             cfg.mapPath      = RESOURCE_DIR"/Map/level2.txt";
-            cfg.pipes        = { 12, -300.0f, -1, 0.0f };
+            cfg.pipes        = { 12, -284.0f, -1, 0.0f };  // pipe2 spawn: col 2
             cfg.backgroundPath = "";
+            cfg.defaultSpawnX  = -284.0f;  // level2 normal spawn: col 2, row 13
             break;
 
         case 12:  // Sub-map for level 2 (pipe2) — underground, solid black background
@@ -148,6 +152,9 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
     m_CameraX      = cfg.initCameraX;
     m_CameraLocked = cfg.cameraLocked;
     m_CameraY      = cfg.cameraY;
+
+    // Apply level-specific default spawn X when the caller used the generic default.
+    if (spawnX == -300.0f) spawnX = cfg.defaultSpawnX;
 
     // Find the highest collidable floor surface at spawnX and land Mario on it.
     float groundTop = -10000.0f;
