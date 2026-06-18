@@ -116,7 +116,7 @@ private:
 
     State m_State;
     float m_WalkSpeed = 35.0f;
-    float m_ShellSpeed = 350.0f;
+    float m_ShellSpeed = 200.0f;
 };
 
 #endif // KOOPA_HPP

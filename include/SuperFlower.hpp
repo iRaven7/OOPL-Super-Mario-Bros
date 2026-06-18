@@ -1,20 +1,19 @@
-#ifndef FIREFLOWER_HPP
-#define FIREFLOWER_HPP
+#ifndef SUPER_FLOWER_HPP
+#define SUPER_FLOWER_HPP
 
 #include "Item.hpp"
-#include "GameStateManager.hpp"
 #include "Mario.hpp"
-#include "MarioState.hpp"
+#include "GameStateManager.hpp"
 #include "Util/Animation.hpp"
 
-class FireFlower : public Item {
+class SuperFlower : public Item {
 public:
-    explicit FireFlower(glm::vec2 startPos) : Item(RESOURCE_DIR"/Items/fireflower1.png") {
+    explicit SuperFlower(glm::vec2 startPos) : Item(RESOURCE_DIR"/Items/superflower1.png") {
         m_Drawable = std::make_shared<Util::Animation>(
             std::vector<std::string>{
-                RESOURCE_DIR"/Items/fireflower1.png",
-                RESOURCE_DIR"/Items/fireflower2.png",
-                RESOURCE_DIR"/Items/fireflower3.png"
+                RESOURCE_DIR"/Items/superflower1.png",
+                RESOURCE_DIR"/Items/superflower2.png",
+                RESOURCE_DIR"/Items/superflower3.png"
             },
             true, 167, true
         );
@@ -41,9 +40,7 @@ public:
             m_IsActive = false;
             m_Visible = false;
             GameStateManager::GetInstance().AddScore(1000);
-            if (mario && !dynamic_cast<FireMarioState*>(mario->GetState())) {
-                mario->ChangeState(std::make_unique<FireMarioState>());
-            }
+            if (mario) mario->ActivateStarPower(5.0f);
         }
     }
 
@@ -53,4 +50,4 @@ private:
     float m_SpawnStartY = 0.0f;
 };
 
-#endif // FIREFLOWER_HPP
+#endif // SUPER_FLOWER_HPP

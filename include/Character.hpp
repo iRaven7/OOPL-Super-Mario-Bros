@@ -29,7 +29,7 @@ public:
     glm::vec2 GetVelocity() const { return m_Velocity; }
 
     [[nodiscard]] virtual glm::vec2 GetSize() const {
-        return { 16.0f, 16.0f };
+        return { 12.0f, 16.0f };
     }
 
     void SetImage(const std::string& ImagePath);

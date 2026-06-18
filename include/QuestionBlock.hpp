@@ -8,10 +8,11 @@
 #include "FireFlower.hpp"
 #include "OneUp.hpp"
 #include "SuperStar.hpp"
+#include "SuperFlower.hpp"
 
 class QuestionBlock : public Block {
 public:
-    enum class ItemType { MUSHROOM, COIN, FIREFLOWER, ONEUP, STAR };
+    enum class ItemType { MUSHROOM, COIN, FIREFLOWER, ONEUP, STAR, SUPERFLOWER };
 
     QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
 
@@ -53,6 +54,9 @@ public:
         }
         else if (m_ItemType == ItemType::STAR) {
             m_SpawnedItem = std::make_shared<SuperStar>(GetPosition());
+        }
+        else if (m_ItemType == ItemType::SUPERFLOWER) {
+            m_SpawnedItem = std::make_shared<SuperFlower>(GetPosition());
         }
     }
 

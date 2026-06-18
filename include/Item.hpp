@@ -7,7 +7,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-// ¥Î«e¸m«Å§i¨ú¥N include¡A¤j´T­°§C½sÄ¶­t¾á
+// ï¿½Î«eï¿½mï¿½Å§iï¿½ï¿½ï¿½N includeï¿½Aï¿½jï¿½Tï¿½ï¿½ï¿½Cï¿½sÄ¶ï¿½tï¿½ï¿½
 class Mario;
 class Block;
 
@@ -36,7 +36,7 @@ public:
         m_Transform.scale = m_BaseScale * cameraZoom;
     }
 
-    virtual glm::vec2 GetSize() const { return { 16.0f, 16.0f }; }
+    virtual glm::vec2 GetSize() const { return { 12.0f, 12.0f }; }
 
 protected:
     std::string m_ImagePath;

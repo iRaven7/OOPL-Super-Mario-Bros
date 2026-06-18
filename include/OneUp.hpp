@@ -21,7 +21,7 @@ public:
             if (pos.y >= m_SpawnStartY + 16.0f) {
                 m_State = State::MOVING;
                 SetZIndex(40);
-                m_Velocity.x = 100.0f;
+                m_Velocity.x = 60.0f;
             }
         }
         else if (m_State == State::MOVING) {

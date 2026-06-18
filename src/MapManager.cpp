@@ -14,6 +14,7 @@
 #include "OneUp.hpp"
 #include "SuperStar.hpp"
 #include "MovingPlatform.hpp"
+#include "SuperFlower.hpp"
 
 void MapManager::LoadMap(const std::string& filePath,
     std::vector<std::shared_ptr<Block>>& outBlocks,
@@ -142,6 +143,62 @@ void MapManager::LoadMap(const std::string& filePath,
                 outBlocks.push_back(top);
                 auto flag = std::make_shared<Flag>(pos);
                 outItems.push_back(flag);
+                break;
+            }
+
+                // --- SuperFlower question block ---
+            case 'T': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::SUPERFLOWER)); break;
+
+                // --- background decorations (no collision) ---
+                // Hills/slides
+            case 's': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/slide.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+            case 'S': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/big_slide.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+                // Bush leaves (top row)
+            case '[': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_left.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+            case '-': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_middle.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+            case ']': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/leaf_right.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+                // Bush logs (bottom row)
+            case '{': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/log_left.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+            case '~': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/log_middle.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
+                break;
+            }
+            case '}': {
+                auto prop = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/log_right.png");
+                prop->SetPosition(pos);
+                outBlocks.push_back(prop);
                 break;
             }
 

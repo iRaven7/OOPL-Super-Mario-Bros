@@ -21,7 +21,7 @@ public:
             if (pos.y >= m_SpawnStartY + 16.0f) {
                 m_State = State::BOUNCING;
                 SetZIndex(40);
-                m_Velocity.x = 150.0f;
+                m_Velocity.x = 80.0f;
                 m_Velocity.y = BOUNCE_SPEED;
             }
         }

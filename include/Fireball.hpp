@@ -15,7 +15,7 @@ public:
         m_Drawable = std::make_shared<Util::Image>(m_ImagePath);
         SetPosition(startPos);
         SetZIndex(45);
-        m_Velocity.x = direction * 350.0f;
+        m_Velocity.x = direction * 200.0f;
         m_Velocity.y = -100.0f;
     }
 
@@ -58,7 +58,7 @@ public:
     bool IsActive() const { return m_IsActive; }
     void Destroy() { m_IsActive = false; m_Visible = false; }
     glm::vec2 GetPosition() const { return m_WorldPosition; }
-    glm::vec2 GetSize() const { return { 16.0f, 16.0f }; }
+    glm::vec2 GetSize() const { return { 6.0f, 6.0f }; }
 
     void SetPosition(const glm::vec2& Position) {
         m_WorldPosition = Position;
