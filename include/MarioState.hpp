@@ -20,6 +20,7 @@ public:
     virtual std::string GetSkidImage() const = 0;
     virtual std::string GetCrouchImage() const = 0;
     virtual std::vector<std::string> GetRunImages() const = 0;
+    virtual std::string GetSlideImage() const { return GetIdleImage(); }
 
     virtual void Enter(Mario* /*mario*/) {}
 };
@@ -69,7 +70,8 @@ public:
 
 class PoleSlideState : public MarioState {
 public:
-    PoleSlideState(float poleX, bool isBig) : m_PoleX(poleX), m_IsBig(isBig) {}
+    PoleSlideState(float poleX, bool isBig, bool isFire = false)
+        : m_PoleX(poleX), m_IsBig(isBig), m_IsFire(isFire) {}
 
     float GetPoleX() const { return m_PoleX; }
     glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
@@ -82,6 +84,11 @@ public:
         if (m_IsBig)
             return { RESOURCE_DIR"/Entities/BigMario/mario_run3.png", RESOURCE_DIR"/Entities/BigMario/mario_run1.png" };
         return { RESOURCE_DIR"/Entities/LittleMario/mario_run3.png", RESOURCE_DIR"/Entities/LittleMario/mario_run1.png" };
+    }
+    std::string GetSlideImage() const override {
+        if (m_IsFire) return RESOURCE_DIR"/Entities/FireflowerMario/fire_slide.png";
+        return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/big_slide.png"
+                       : RESOURCE_DIR"/Entities/LittleMario/slide.png";
     }
 
     void Enter(Mario* mario) override;
@@ -98,6 +105,7 @@ public:
 private:
     float m_PoleX;
     bool m_IsBig;
+    bool m_IsFire;
     float m_SlideSpeed = 200.0f;
     float m_WalkSpeed = 150.0f;
     bool m_IsBottomReached = false;

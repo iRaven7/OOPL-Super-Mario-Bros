@@ -63,6 +63,7 @@ void MapManager::LoadMap(const std::string& filePath,
                 // blue variants
             case 'b': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor_blue.png")); break;
             case 'B': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png")); break;
+            case 'n': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/building_blue.png")); break;
 
                 // 'f' = upward-moving platform, 'h' = downward-moving platform
                 // Place tile at col X; leave the next 6 columns as '0' in the map.
@@ -81,11 +82,11 @@ void MapManager::LoadMap(const std::string& filePath,
             }
 
                 // --- question blocks ---
-            case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::MUSHROOM)); break;
-            case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::COIN)); break;
-            case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::FIREFLOWER)); break;
-            case 'U': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", QuestionBlock::ItemType::ONEUP)); break;
-            case '*': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", QuestionBlock::ItemType::STAR)); break;
+            case 'M': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::MUSHROOM)); break;
+            case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::COIN)); break;
+            case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::FIREFLOWER)); break;
+            case 'U': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::ONEUP)); break;
+            case '*': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::STAR)); break;
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
                 // --- pipe tiles (visual only) ---
@@ -146,8 +147,26 @@ void MapManager::LoadMap(const std::string& filePath,
                 break;
             }
 
+                // --- castle decorations (non-collidable) ---
+                // castle_door: rendered in front of Mario (ZIndex 60) so Mario appears to walk inside.
+            case 'd': {
+                auto door = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/castle_door.png");
+                door->SetPosition(pos);
+                door->SetZIndex(60);
+                outBlocks.push_back(door);
+                break;
+            }
+                // castle_flag: decorative flag on castle rooftop.
+            case 'g': {
+                auto cflag = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/castle_flag.png");
+                cflag->SetPosition(pos);
+                cflag->SetZIndex(20);
+                outBlocks.push_back(cflag);
+                break;
+            }
+
                 // --- SuperFlower question block ---
-            case 'T': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", QuestionBlock::ItemType::SUPERFLOWER)); break;
+            case 'T': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::SUPERFLOWER)); break;
 
                 // --- background decorations (no collision) ---
                 // Hills/slides

@@ -27,9 +27,9 @@ public:
     void OnCollect(Mario* mario) override {
         if (!m_IsTriggered) {
             m_IsTriggered = true;
-            // 觸發瑪利歐滑旗桿，並給予分數！
-            bool isBig = mario->GetSize().y > 16.0f;
-            mario->ChangeState(std::make_unique<PoleSlideState>(m_PoleX, isBig), false);
+            bool isBig  = mario->GetSize().y > 16.0f;
+            bool isFire = dynamic_cast<FireMarioState*>(mario->GetState()) != nullptr;
+            mario->ChangeState(std::make_unique<PoleSlideState>(m_PoleX, isBig, isFire), false);
             GameStateManager::GetInstance().AddScore(5000);
         }
     }

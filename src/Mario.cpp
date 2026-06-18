@@ -68,11 +68,11 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
     if (IsControlLocked()) {
         auto poleState = dynamic_cast<PoleSlideState*>(m_State.get());
         if (poleState && !poleState->IsBottomReached()) {
-            SetImage(m_State->GetIdleImage());
+            SetImage(m_State->GetSlideImage());
             m_Transform.scale.x = 1.0f;
         }
         else if (poleState && !poleState->IsPauseCompleted()) {
-            SetImage(m_State->GetIdleImage());
+            SetImage(m_State->GetSlideImage());
             m_Transform.scale.x = 1.0f;
         }
         else if (poleState) {

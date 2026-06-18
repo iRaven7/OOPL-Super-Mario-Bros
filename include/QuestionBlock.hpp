@@ -9,54 +9,64 @@
 #include "OneUp.hpp"
 #include "SuperStar.hpp"
 #include "SuperFlower.hpp"
+#include "Mario.hpp"
+#include "MarioState.hpp"
 
 class QuestionBlock : public Block {
 public:
-    enum class ItemType { MUSHROOM, COIN, FIREFLOWER, ONEUP, STAR, SUPERFLOWER };
+    // count controls how many items emerge (one per hit).
+    QuestionBlock(const std::string& imagePath, ContentType type, int count = 1)
+        : Block(imagePath)
+    {
+        SetContents(type, count);
+    }
 
-    QuestionBlock(const std::string& imagePath, ItemType type) : Block(imagePath), m_ItemType(type) {}
-
-    // �b QuestionBlock ���O���ק惡�q�G
     glm::vec2 GetCollisionPosition() const override {
-        // �ץ��G�����ϥε��諸 m_WorldPosition.x
         return { m_WorldPosition.x, m_OriginalY };
     }
 
-    // �P�˽T�{ SetPosition ���[�W override
     void SetPosition(const glm::vec2& Position) override {
         Block::SetPosition(Position);
         if (!m_IsBouncing) m_OriginalY = Position.y;
     }
 
     void OnHit(Character* hitter) override {
-        if (m_IsEmpty || m_IsBouncing) return;
+        if (!HasContents() || m_IsBouncing) return;
 
         m_IsBouncing = true;
         m_BounceVelocity = 250.0f;
-        m_IsEmpty = true;
-        SetImage(RESOURCE_DIR"/Blocks/empty_question_block.png");
 
-        if (m_ItemType == ItemType::MUSHROOM) {
+        // Consume one item from the block's contents.
+        m_ContentCount--;
+
+        if (!HasContents())
+            SetImage(RESOURCE_DIR"/Blocks/empty_question_block.png");
+
+        switch (GetContentType()) {
+        case ContentType::MUSHROOM:
             m_SpawnedItem = std::make_shared<Mushroom>(GetPosition());
-        }
-        else if (m_ItemType == ItemType::COIN) {
+            break;
+        case ContentType::COIN:
             m_SpawnedItem = std::make_shared<Coin>(GetPosition());
-        }
-        else if (m_ItemType == ItemType::FIREFLOWER) {
+            break;
+        case ContentType::FIREFLOWER: {
             Mario* mario = dynamic_cast<Mario*>(hitter);
             bool isSmall = mario && dynamic_cast<SmallMarioState*>(mario->GetState());
             m_SpawnedItem = isSmall
                 ? std::static_pointer_cast<Item>(std::make_shared<Mushroom>(GetPosition()))
                 : std::static_pointer_cast<Item>(std::make_shared<FireFlower>(GetPosition()));
+            break;
         }
-        else if (m_ItemType == ItemType::ONEUP) {
+        case ContentType::ONEUP:
             m_SpawnedItem = std::make_shared<OneUp>(GetPosition());
-        }
-        else if (m_ItemType == ItemType::STAR) {
+            break;
+        case ContentType::STAR:
             m_SpawnedItem = std::make_shared<SuperStar>(GetPosition());
-        }
-        else if (m_ItemType == ItemType::SUPERFLOWER) {
+            break;
+        case ContentType::SUPERFLOWER:
             m_SpawnedItem = std::make_shared<SuperFlower>(GetPosition());
+            break;
+        default: break;
         }
     }
 
@@ -77,16 +87,14 @@ public:
 
     std::shared_ptr<Item> PopSpawnedItem() override {
         auto item = m_SpawnedItem;
-        m_SpawnedItem = nullptr; // ������M�šA�T�O�u�ͦ��@��
+        m_SpawnedItem = nullptr;
         return item;
     }
 
 private:
-    bool m_IsEmpty = false;
-    bool m_IsBouncing = false;
-    float m_OriginalY = 0.0f;
+    bool  m_IsBouncing    = false;
+    float m_OriginalY     = 0.0f;
     float m_BounceVelocity = 0.0f;
-    ItemType m_ItemType;
     std::shared_ptr<Item> m_SpawnedItem = nullptr;
 };
 
