@@ -11,7 +11,7 @@ public:
     Flag(glm::vec2 bottomPos) : Item(RESOURCE_DIR"/Blocks/flag.png") {
         m_PoleX = bottomPos.x;
         m_BottomY = bottomPos.y;
-        m_FlagY = bottomPos.y + 9 * 32.0f; // 假設旗桿有 9 格高
+        m_FlagY = bottomPos.y + 9 * 16.0f; // 9-segment pole, top at +144
 
         SetPosition({ m_PoleX - 16.0f, m_FlagY});
         SetZIndex(4);

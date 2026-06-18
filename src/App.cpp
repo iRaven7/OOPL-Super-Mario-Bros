@@ -55,7 +55,7 @@ void App::Start() {
     LoadLevel(0);
 }
 
-void App::LoadLevel(int level, float spawnX) {
+void App::LoadLevel(int level, float spawnX, bool fromPipe) {
     m_CurrentLevel = level;
 
     for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
@@ -73,8 +73,7 @@ void App::LoadLevel(int level, float spawnX) {
     if (m_Background) { m_Root.RemoveChild(m_Background); }
     m_Root.RemoveChild(m_Mario);
 
-    m_Background = std::make_shared<Background>(RESOURCE_DIR"/Blocks/sky.png");
-    m_Root.AddChild(m_Background);
+    m_Background = nullptr;
     m_Root.AddChild(m_Mario);
 
     // Per-level configuration.
@@ -83,10 +82,12 @@ void App::LoadLevel(int level, float spawnX) {
     struct LevelConfig {
         std::string    mapPath;
         LevelPipeConfig pipes;
-        float          cameraZoom  = 1.8f;
-        float          initCameraX = 0.0f;
+        float          cameraZoom   = 1.8f;
+        float          initCameraX  = 0.0f;
         bool           cameraLocked = false;
         float          cameraY      = 0.0f;
+        // Empty string = no background object; the renderer clear color (black) shows through.
+        std::string    backgroundPath = RESOURCE_DIR"/Blocks/sky.png";
     };
 
     LevelConfig cfg;
@@ -97,25 +98,44 @@ void App::LoadLevel(int level, float spawnX) {
 
         case 1:   // World 1-1
             cfg.mapPath      = RESOURCE_DIR"/Map/level1.txt";
-            // 'W' pipe → sub-map 11; Mario enters at default spawn (-300)
-            // 'w' pipe in sub-map returns here at x = 700 (col 62 of level1)
-            cfg.pipes        = { 11, -196.0f, -1, 0.0f }; // sub-map spawn at col 6 centre
+            cfg.pipes        = { 11, -196.0f, -1, 0.0f };
             break;
 
-        case 11:  // Sub-map for level 1
+        case 11:  // Sub-map for level 1 (pipe1) — underground, solid black background
             cfg.mapPath      = RESOURCE_DIR"/Map/pipe1.txt";
-            // 'w' pipe returns to level 1; Mario exits at second pipe from right (col ~170)
-            cfg.pipes        = { -1, 0.0f, 1, 2420.0f };
-            cfg.cameraZoom   = 1280.0f / (17 * 16.0f);   // exactly 17 blocks wide
-            cfg.initCameraX  = -310.0f + (17 * 16.0f / 2.0f);  // centre the room
-            cfg.cameraLocked = true;   // fixed camera: do not follow Mario
-            cfg.cameraY      = -30.0f; // shift view down to show ground and coins
+            cfg.pipes        = { -1, 0.0f, 1, 2412.0f };
+            cfg.cameraZoom   = 1280.0f / (17 * 16.0f);
+            cfg.initCameraX  = -310.0f + (17 * 16.0f / 2.0f);
+            cfg.cameraLocked = true;
+            cfg.cameraY      = -30.0f;
+            cfg.backgroundPath = "";
             break;
 
-        // Add case 2, case 12, case 3, case 13 … here for future levels
+        case 2:   // World 1-2 (underground) — solid black background
+            cfg.mapPath      = RESOURCE_DIR"/Map/level2.txt";
+            cfg.pipes        = { 12, -300.0f, -1, 0.0f };
+            cfg.backgroundPath = "";
+            break;
+
+        case 12:  // Sub-map for level 2 (pipe2) — underground, solid black background
+            cfg.mapPath      = RESOURCE_DIR"/Map/pipe2.txt";
+            cfg.pipes        = { -1, 0.0f, 2, 0.0f };
+            cfg.cameraZoom   = 1280.0f / (17 * 16.0f);
+            cfg.initCameraX  = -310.0f + (17 * 16.0f / 2.0f);
+            cfg.cameraLocked = true;
+            cfg.cameraY      = -30.0f;
+            cfg.backgroundPath = "";
+            break;
+
+        // Add case 3, case 13 … here for future levels
         default:
             cfg.mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
             break;
+    }
+
+    if (!cfg.backgroundPath.empty()) {
+        m_Background = std::make_shared<Background>(cfg.backgroundPath);
+        m_Root.AddChild(m_Background);
     }
 
     m_MapManager.LoadMap(cfg.mapPath, m_CurrentMapBlocks, m_Enemies, m_Items, cfg.pipes);
@@ -142,16 +162,26 @@ void App::LoadLevel(int level, float spawnX) {
     }
     float spawnY = (groundTop > -9999.0f) ? (groundTop + 8.0f) : 1500.0f;
 
-    m_Mario->SetPosition({ spawnX, spawnY });
     m_Mario->SetVelocity({ 0.0f, 0.0f });
     m_Mario->SetZIndex(50);
+    m_Mario->SetPoleWalkInvisible(false);
+    m_Mario->SetVisible(true);
 
-    if (m_Mario->IsControlLocked()) {
-        if (m_Mario->GetSize().y > 16.0f) {
-            m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
-        }
-        else {
-            m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
+    if (fromPipe) {
+        bool isBig = (m_Mario->GetSize().y > 16.0f);
+        // Place Mario inside the pipe (3 tiles below standing pos) then animate up
+        m_Mario->SetPosition({ spawnX, spawnY - 48.0f });
+        m_Mario->ChangeState(std::make_unique<PipeExitState>(isBig, spawnY), false);
+    }
+    else {
+        m_Mario->SetPosition({ spawnX, spawnY });
+        if (m_Mario->IsControlLocked()) {
+            if (m_Mario->GetSize().y > 16.0f) {
+                m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
+            }
+            else {
+                m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
+            }
         }
     }
 
@@ -335,10 +365,11 @@ void App::Update() {
         }
     }
 
-    // 檢查是不是鑽到底了
+    // Check if pipe slide has finished — returning from a sub-map (11+) to a main level triggers exit animation
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
         if (pipeState->IsDownReached()) {
-            LoadLevel(pipeState->GetTargetLevel(), pipeState->GetSpawnX());
+            bool isReturn = (m_CurrentLevel >= 10 && pipeState->GetTargetLevel() < 10);
+            LoadLevel(pipeState->GetTargetLevel(), pipeState->GetSpawnX(), isReturn);
         }
     }
 
@@ -360,6 +391,17 @@ void App::Update() {
     m_Mario->SetCrouching(wantsCrouch);
 
     if (wantsFire) m_Mario->Shoot();
+
+    // Transition out of pipe exit state once Mario has surfaced
+    if (auto exitState = dynamic_cast<PipeExitState*>(m_Mario->GetState())) {
+        if (exitState->IsExitDone()) {
+            bool isBig = (m_Mario->GetSize().y > 16.0f);
+            if (isBig)
+                m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
+            else
+                m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
+        }
+    }
 
     auto newFireballs = m_Mario->PopSpawnedFireballs();
     for (auto& fb : newFireballs) {

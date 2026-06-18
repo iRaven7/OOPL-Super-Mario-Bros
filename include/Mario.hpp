@@ -18,6 +18,8 @@ public:
     MarioState* GetState() const { return m_State.get(); }
     [[nodiscard]] bool IsInvincible() const { return m_InvincibleTimer > 0.0f; }
     [[nodiscard]] bool IsStarPowered() const { return m_StarTimer > 0.0f; }
+    void SetPoleWalkInvisible(bool v) { m_PoleWalkInvisible = v; }
+    [[nodiscard]] bool IsPoleWalkInvisible() const { return m_PoleWalkInvisible; }
     void ActivateStarPower(float duration) { m_StarTimer = duration; }
     [[nodiscard]] bool CanBreakBlocks() const override;
     [[nodiscard]] bool IsControlLocked() const;
@@ -58,6 +60,7 @@ private:
     bool  m_DeathBounceStarted = false;
     float m_AnimTimer = 0.0f;
     bool m_IsDead = false;
+    bool m_PoleWalkInvisible = false;
     float m_ShootCooldown = 0.0f;
     std::vector<std::shared_ptr<Fireball>> m_SpawnedFireballs;
 };

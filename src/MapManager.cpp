@@ -90,10 +90,19 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
                 // --- pipe tiles (visual only) ---
+                // vertical pipe
             case 'o': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tl.png")); break;
             case 'p': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_tr.png")); break;
             case 'k': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl.png")); break;
             case 'l': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr.png")); break;
+                // side (horizontal) pipe — place mouth on the right, body extending left:
+                //   body row:  i i i ... (pipe_l_rotate / pipe_r_rotate for top & bottom rows)
+                //   mouth col: q          (pipe_dl_rotate — top of opening)
+                //              v          (pipe_dr_rotate — bottom of opening)
+            case 'i': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_l_rotate.png")); break;
+            case 'j': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_r_rotate.png")); break;
+            case 'q': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dl_rotate.png")); break;
+            case 'v': addPipe(std::make_shared<UnbreakableBlock>(RESOURCE_DIR"/Blocks/pipe_dr_rotate.png")); break;
 
                 // --- warp pipes ---
                 // 'W' : enter pipe — destination and spawn come from LevelPipeConfig::subMapLevel/subMapSpawnX
@@ -134,13 +143,13 @@ void MapManager::LoadMap(const std::string& filePath,
 
                 // --- flag pole ---
             case 'X': {
-                for (int i = 0; i < 18; ++i) {
+                for (int i = 0; i < 9; ++i) {
                     auto pole = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_pole.png");
                     pole->SetPosition({ pos.x, pos.y + i * 16.0f });
                     outBlocks.push_back(pole);
                 }
                 auto top = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_top.png");
-                top->SetPosition({ pos.x, pos.y + 18 * 16.0f });
+                top->SetPosition({ pos.x, pos.y + 9 * 16.0f });
                 outBlocks.push_back(top);
                 auto flag = std::make_shared<Flag>(pos);
                 outItems.push_back(flag);

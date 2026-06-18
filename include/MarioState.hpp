@@ -27,7 +27,7 @@ public:
 
 class SmallMarioState : public MarioState {
 public:
-    glm::vec2 GetHitboxSize() const override { return { 16.0f, 16.0f }; }
+    glm::vec2 GetHitboxSize() const override { return { 16.0f, 15.0f }; }
     bool CanBreakBlocks() const override { return false; }
 
     std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
@@ -41,7 +41,7 @@ public:
 
 class BigMarioState : public MarioState {
 public:
-    glm::vec2 GetHitboxSize() const override { return { 16.0f, 32.0f }; }
+    glm::vec2 GetHitboxSize() const override { return { 16.0f, 31.0f }; }
     bool CanBreakBlocks() const override { return true; }
 
     std::string GetIdleImage() const override { return RESOURCE_DIR"/Entities/BigMario/mario.png"; }
@@ -55,7 +55,7 @@ public:
 
 class FireMarioState : public MarioState {
 public:
-    glm::vec2 GetHitboxSize() const override { return { 16.0f, 32.0f }; }
+    glm::vec2 GetHitboxSize() const override { return { 16.0f, 31.0f }; }
     bool CanBreakBlocks() const override { return true; }
     bool CanShoot() const override { return true; }
 
@@ -74,7 +74,7 @@ public:
         : m_PoleX(poleX), m_IsBig(isBig), m_IsFire(isFire) {}
 
     float GetPoleX() const { return m_PoleX; }
-    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
+    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 31.0f } : glm::vec2{ 16.0f, 15.0f }; }
     bool CanBreakBlocks() const override { return false; }
     std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario_jump.png" : RESOURCE_DIR"/Entities/LittleMario/mario_jump.png"; }
     std::string GetCrouchImage() const override { return GetIdleImage(); }
@@ -101,6 +101,9 @@ public:
         m_PauseTimer -= dt;
         if (m_PauseTimer <= 0.0f) m_PauseCompleted = true;
     }
+    // world-X at which Mario turns invisible while walking right after the pole
+    // column 219 (1-based) = startX(-300) + 218 * BLOCK_SIZE(16)
+    float GetInvisibleThresholdX() const { return m_InvisibleThresholdX; }
 
 private:
     float m_PoleX;
@@ -111,6 +114,7 @@ private:
     bool m_IsBottomReached = false;
     float m_PauseTimer = 0.8f;
     bool m_PauseCompleted = false;
+    float m_InvisibleThresholdX = 3188.0f;
 };
 
 class PipeSlideState : public MarioState {
@@ -127,7 +131,7 @@ public:
         : m_IsBig(isBig), m_SlideDir(dir), m_Target(target)
         , m_TargetLevel(targetLevel), m_SpawnX(spawnX) {}
 
-    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 32.0f } : glm::vec2{ 16.0f, 16.0f }; }
+    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 31.0f } : glm::vec2{ 16.0f, 15.0f }; }
     bool CanBreakBlocks() const override { return false; }
 
     std::string GetIdleImage() const override { return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png" : RESOURCE_DIR"/Entities/LittleMario/mario.png"; }
@@ -154,6 +158,34 @@ private:
     int      m_TargetLevel;
     float m_SpawnX;
     bool m_IsDownReached = false;
+};
+
+class PipeExitState : public MarioState {
+public:
+    PipeExitState(bool isBig, float targetY)
+        : m_IsBig(isBig), m_TargetY(targetY) {}
+
+    glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 31.0f } : glm::vec2{ 16.0f, 15.0f }; }
+    bool CanBreakBlocks() const override { return false; }
+    std::string GetIdleImage() const override {
+        return m_IsBig ? RESOURCE_DIR"/Entities/BigMario/mario.png"
+                       : RESOURCE_DIR"/Entities/LittleMario/mario.png";
+    }
+    std::string GetCrouchImage() const override { return GetIdleImage(); }
+    std::string GetJumpImage() const override { return GetIdleImage(); }
+    std::string GetSkidImage() const override { return GetIdleImage(); }
+    std::vector<std::string> GetRunImages() const override { return { GetIdleImage() }; }
+
+    void Enter(Mario* mario) override;
+    float GetTargetY() const { return m_TargetY; }
+    float GetExitSpeed() const { return 50.0f; }
+    bool IsExitDone() const { return m_IsExitDone; }
+    void SetExitDone(bool val) { m_IsExitDone = val; }
+
+private:
+    bool  m_IsBig;
+    float m_TargetY;
+    bool  m_IsExitDone = false;
 };
 
 #endif // MARIO_STATE_HPP

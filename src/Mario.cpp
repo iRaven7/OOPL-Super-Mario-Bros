@@ -11,7 +11,8 @@ Mario::Mario() : Character(RESOURCE_DIR"/Entities/LittleMario/mario.png") {
 
 bool Mario::IsControlLocked() const {
     return dynamic_cast<PoleSlideState*>(m_State.get()) != nullptr ||
-        dynamic_cast<PipeSlideState*>(m_State.get()) != nullptr;
+        dynamic_cast<PipeSlideState*>(m_State.get()) != nullptr ||
+        dynamic_cast<PipeExitState*>(m_State.get()) != nullptr;
 }
 
 void Mario::ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause) {
@@ -84,6 +85,10 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
                 SetImage(frames[frameIndex]);
             }
         }
+        else if (dynamic_cast<PipeExitState*>(m_State.get())) {
+            SetImage(m_State->GetIdleImage());
+            m_Transform.scale.x = 1.0f;
+        }
         return;
     }
 
@@ -131,10 +136,12 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
 }
 
 void Mario::UpdateRenderPosition(float cameraX, float cameraZoom) {
-    float yOffset = 0.0f;
+    // 0.5f shifts the sprite down by half the 1-pixel hitbox reduction so the
+    // sprite bottom stays flush with the ground even though the hitbox is shorter.
+    float yOffset = 0.5f;
 
     if (m_IsCrouching && m_State && m_State->GetHitboxSize().y > 16.0f) {
-        yOffset = 8.0f;
+        yOffset += 8.0f;
     }
 
     m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
@@ -154,7 +161,7 @@ void Mario::Update(float deltaTime) {
     }
     else {
         m_InvincibleTimer = 0.0f;
-        m_Visible = true;
+        if (!m_PoleWalkInvisible) m_Visible = true;
     }
 
     if (m_StarTimer > 0.0f) {
@@ -246,11 +253,29 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             auto res = Character::UpdatePhysics(deltaTime, 1.0f, false, false, blocks);
             m_Velocity.x = poleState->GetWalkSpeed();
 
+            if (!m_PoleWalkInvisible && GetPosition().x >= poleState->GetInvisibleThresholdX()) {
+                m_PoleWalkInvisible = true;
+                m_Visible = false;
+            }
+
             if (GetPosition().x > poleState->GetPoleX() + 300.0f) {
                 GameStateManager::GetInstance().SetLevelComplete(true);
             }
             return res;
         }
+    }
+
+    if (auto exitState = dynamic_cast<PipeExitState*>(m_State.get())) {
+        if (!exitState->IsExitDone()) {
+            glm::vec2 pos = GetPosition();
+            pos.y += exitState->GetExitSpeed() * deltaTime;
+            if (pos.y >= exitState->GetTargetY()) {
+                pos.y = exitState->GetTargetY();
+                exitState->SetExitDone(true);
+            }
+            SetPosition(pos);
+        }
+        return { 0.0f, 0.0f };
     }
 
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_State.get())) {
@@ -295,4 +320,9 @@ void PoleSlideState::Enter(Mario* mario) {
 void PipeSlideState::Enter(Mario* mario) {
     mario->SetVelocity({ 0.0f, 0.0f });
     mario->SetZIndex(5);
+}
+
+void PipeExitState::Enter(Mario* mario) {
+    mario->SetVelocity({ 0.0f, 0.0f });
+    mario->SetZIndex(50);
 }
