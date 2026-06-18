@@ -33,9 +33,14 @@ public:
     void UpdateRenderPosition(float cameraX, float cameraZoom) override {
         // Lift the sprite ~4px above the hitbox centre so the taller koopa art
         // sits correctly on the ground (purely visual; hitbox is unchanged).
-        constexpr float kSpriteYOffset = 4.0f;
+        float yOffset = 4.0f;
+        // The shell sprite alone sits 8px lower — applied only in shell states so
+        // the walking koopa keeps its normal height.
+        if (m_State == State::ShellIdle || m_State == State::ShellMoving) {
+            yOffset -= 8.0f;
+        }
         m_Transform.translation.x = (m_WorldPosition.x - cameraX) * cameraZoom;
-        m_Transform.translation.y = (m_WorldPosition.y + kSpriteYOffset) * cameraZoom;
+        m_Transform.translation.y = (m_WorldPosition.y + yOffset) * cameraZoom;
 
         float direction = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
         m_Transform.scale.x = m_BaseScale.x * cameraZoom * direction;

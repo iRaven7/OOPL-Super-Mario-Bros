@@ -6,13 +6,21 @@
 #include "GameStateManager.hpp"
 #include "MarioState.hpp"
 #include "PiranhaPlant.hpp"
+#include "config.hpp"   // WINDOW_WIDTH / WINDOW_HEIGHT
 #include <iomanip>
 #include <sstream>
+
+// Half the window in pixels — render translations are centred at (0,0), so the
+// view spans ±kHalfW x ±kHalfH. Derived from the window size so they stay correct
+// if WINDOW_WIDTH / WINDOW_HEIGHT change.
+static constexpr float kHalfW = WINDOW_WIDTH / 2.0f;
+static constexpr float kHalfH = WINDOW_HEIGHT / 2.0f;
 
 void App::Start() {
     LOG_TRACE("Start");
 
-    m_CameraZoom = 1.8f;
+    // Screen shows 18 tiles across: 1280px / (18 tiles * 16px) ≈ 4.44 zoom.
+    m_CameraZoom = 1280.0f / (18 * 16.0f);
     m_CurrentState = State::UPDATE;
 
     m_Mario = std::make_shared<Mario>();
@@ -83,7 +91,8 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
     struct LevelConfig {
         std::string    mapPath;
         LevelPipeConfig pipes;
-        float          cameraZoom   = 1.8f;
+        // 18 tiles wide: 1280px / (18 tiles * 16px) ≈ 4.44
+        float          cameraZoom   = 1280.0f / (18 * 18.0f);
         float          initCameraX  = 0.0f;
         bool           cameraLocked = false;
         float          cameraY      = 0.0f;
@@ -175,6 +184,17 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
         }
     }
     float spawnY = (groundTop > -9999.0f) ? (groundTop + 8.0f) : 1500.0f;
+
+    // At this zoom the view is only ~16x9 tiles, so frame the camera on the spawn
+    // point: Mario's spawn height sits in the lower third, and he starts in the
+    // left half of the view (camera then scrolls right as he advances). Locked
+    // sub-maps keep their hand-tuned camera placement.
+    if (!cfg.cameraLocked) {
+        float viewHalfW = kHalfW / m_CameraZoom;
+        float viewHalfH = kHalfH / m_CameraZoom;
+        m_CameraX = spawnX + viewHalfW * 0.5f;
+        m_CameraY = spawnY + viewHalfH * 0.45f;
+    }
 
     m_Mario->SetVelocity({ 0.0f, 0.0f });
     m_Mario->SetZIndex(50);
@@ -501,7 +521,12 @@ void App::UpdateCamera() {
         m_CameraX = marioWorldX - triggerX;
     }
 
-    float leftScreenBoundary = m_CameraX - 400.0f + 25.0f;
+    // Camera height is locked: m_CameraY stays at the value framed on level load
+    // (see LoadLevel) and does not follow Mario vertically.
+
+    // Keep Mario from leaving the left edge of the view (zoom-aware: the visible
+    // half-width in world units is kHalfW / zoom).
+    float leftScreenBoundary = m_CameraX - kHalfW / m_CameraZoom + m_Mario->GetSize().x * 0.5f;
     if (m_Mario->GetPosition().x < leftScreenBoundary) {
         m_Mario->SetPosition({ leftScreenBoundary, m_Mario->GetPosition().y });
     }
@@ -540,6 +565,22 @@ void App::UpdateCamera() {
         for (auto& fb : m_Fireballs)
             if (fb->IsActive()) fb->m_Transform.translation.y += yShift;
     }
+
+    // View culling: hide anything outside the camera view so off-screen objects
+    // aren't rendered. Render translations are in screen pixels centred at (0,0),
+    // so the window spans ±kHalfW x ±kHalfH; allow two tiles of margin to avoid
+    // popping (covers the 64px-wide moving platforms whose centre is past the edge).
+    const float marginX = 32.0f * m_CameraZoom;
+    const float marginY = 32.0f * m_CameraZoom;
+    auto cull = [&](Util::GameObject* obj) {
+        const auto& t = obj->m_Transform.translation;
+        obj->SetVisible(std::abs(t.x) <= kHalfW + marginX &&
+                        std::abs(t.y) <= kHalfH + marginY);
+    };
+    for (auto& block : m_CurrentMapBlocks) cull(block.get());
+    for (auto& item : m_Items)            if (item->IsActive())  cull(item.get());
+    for (auto& enemy : m_Enemies)         if (enemy->IsActive()) cull(enemy.get());
+    for (auto& fb : m_Fireballs)          if (fb->IsActive())    cull(fb.get());
 }
 
 void App::TriggerDeath() {
