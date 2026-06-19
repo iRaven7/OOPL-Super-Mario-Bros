@@ -95,7 +95,20 @@ void MapManager::LoadMap(const std::string& filePath,
             case 'C': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::COIN)); break;
             case 'F': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/question_block.png", Block::ContentType::FIREFLOWER)); break;
             case 'U': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::ONEUP)); break;
+
+                // --- breakable-looking (hidden) item blocks ---
+                // Same QuestionBlock item logic (bump from below -> item emerges,
+                // can't be smashed), just re-skinned to the brick sprite so they
+                // blend in with ordinary breakable blocks. Each of the three item
+                // types has a normal and a blue-palette version:
+                //     normal brick (breakable_block.png):       '*' STAR, '%' COIN, '@' MUSHROOM
+                //     blue   brick (breakable_block_blue.png):  '$' STAR, '7' COIN, '8' MUSHROOM
             case '*': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::STAR)); break;
+            case '%': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::COIN)); break;
+            case '@': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block.png", Block::ContentType::MUSHROOM)); break;
+            case '$': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png", Block::ContentType::STAR)); break;
+            case '7': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png", Block::ContentType::COIN)); break;
+            case '8': addBlock(std::make_shared<QuestionBlock>(RESOURCE_DIR"/Blocks/breakable_block_blue.png", Block::ContentType::MUSHROOM)); break;
             case 'c': outItems.push_back(std::make_shared<Coin>(pos, true)); break;
 
                 // --- pipe tiles (visual only) ---
