@@ -67,6 +67,13 @@ public:
     // both of which start the player over on a full timer.
     void ResetTime() { m_TimeRemaining = 400.0f; }
 
+    // Adjust the clock (cheat top-up); clamped to a sane 0..999 range.
+    void AddTime(int seconds) {
+        m_TimeRemaining += static_cast<float>(seconds);
+        if (m_TimeRemaining > 999.0f) m_TimeRemaining = 999.0f;
+        if (m_TimeRemaining < 0.0f)   m_TimeRemaining = 0.0f;
+    }
+
 
     void Reset() {
         m_Score = 0;

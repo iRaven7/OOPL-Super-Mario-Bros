@@ -43,6 +43,10 @@ private:
     void TriggerLevelTransition();       // Ĳ�o�L�����禡
     void TriggerDeath();
 
+    // Debug cheat keys (letters, so they don't clash with the 0-9 level selector):
+    //   G god mode  V cycle power  I star  T +time  N +life
+    void HandleCheats();
+
     // --- Level-2 intro cutscene ---
     // After World 1-1 is cleared the game loads the `level2_animation` scene,
     // where Mario first slides into a pipe, then walks across to a second pipe

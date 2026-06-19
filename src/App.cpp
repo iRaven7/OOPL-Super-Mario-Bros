@@ -281,7 +281,9 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe, float spawnY) {
     m_Mario->SetVisible(true);
 
     if (fromPipe) {
-        bool isBig = (m_Mario->GetSize().y > 16.0f);
+        // A big/fire Mario rises with the taller hitbox; the exact tier is restored
+        // once he surfaces (see the PipeExitState handler in Update).
+        bool isBig = (m_Mario->GetPowerTier() != Mario::PowerTier::Small);
         // Place Mario inside the pipe (3 tiles below standing pos) then animate up
         m_Mario->SetPosition({ spawnX, spawnY - 48.0f });
         m_Mario->ChangeState(std::make_unique<PipeExitState>(isBig, spawnY), false);
@@ -289,12 +291,10 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe, float spawnY) {
     else {
         m_Mario->SetPosition({ spawnX, spawnY });
         if (m_Mario->IsControlLocked()) {
-            if (m_Mario->GetSize().y > 16.0f) {
-                m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
-            }
-            else {
-                m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
-            }
+            // Arriving still in a control-locked transitional state (pole / pipe
+            // slide): restore his retained power tier rather than collapsing
+            // Fire down to Big from the hitbox size.
+            m_Mario->ApplyPowerState();
         }
     }
 
@@ -561,7 +561,7 @@ void App::Update() {
 
     // Pit death: dropping below row 28 is fatal. Ignore while control is locked
     // (pipe/pole sequences move Mario vertically by design).
-    if (!m_Mario->IsControlLocked() && m_Mario->GetPosition().y < kPitDeathY) {
+    if (!m_Mario->IsControlLocked() && !m_Mario->IsGodMode() && m_Mario->GetPosition().y < kPitDeathY) {
         m_Mario->Die();
     }
 
@@ -570,11 +570,7 @@ void App::Update() {
     // Transition out of pipe exit state once Mario has surfaced
     if (auto exitState = dynamic_cast<PipeExitState*>(m_Mario->GetState())) {
         if (exitState->IsExitDone()) {
-            bool isBig = (m_Mario->GetSize().y > 16.0f);
-            if (isBig)
-                m_Mario->ChangeState(std::make_unique<BigMarioState>(), false);
-            else
-                m_Mario->ChangeState(std::make_unique<SmallMarioState>(), false);
+            m_Mario->ApplyPowerState();   // restore Small/Big/Fire exactly
         }
     }
 
@@ -584,8 +580,23 @@ void App::Update() {
         m_Root.AddChild(fb);
     }
 
+    // Update fireballs, and retire any that travel beyond the viewport so they
+    // don't keep simulating off-screen. (m_CameraX/Y are this point still last
+    // frame's values — UpdateCamera runs later — which is plenty accurate for
+    // culling, with a tile of margin.) CleanupInactiveEntities removes them below.
+    const float fbViewHalfW = kHalfW / m_CameraZoom;
+    const float fbViewHalfH = kHalfH / m_CameraZoom;
+    const float fbCullMargin = 16.0f;
     for (auto& fb : m_Fireballs) {
-        if (fb->IsActive()) fb->Update(deltaTime, m_CurrentMapBlocks);
+        if (!fb->IsActive()) continue;
+        fb->Update(deltaTime, m_CurrentMapBlocks);
+        glm::vec2 fbPos = fb->GetPosition();
+        if (fbPos.x < m_CameraX - fbViewHalfW - fbCullMargin ||
+            fbPos.x > m_CameraX + fbViewHalfW + fbCullMargin ||
+            fbPos.y < m_CameraY - fbViewHalfH - fbCullMargin ||
+            fbPos.y > m_CameraY + fbViewHalfH + fbCullMargin) {
+            fb->Destroy();
+        }
     }
 
     // Off-screen elements freeze completely: anything whose world-X lies outside
@@ -619,6 +630,8 @@ void App::Update() {
 
     UpdateCamera();
     m_Root.Update();
+
+    HandleCheats();
 
     // Keys 0-9: main-level selector (sub-maps 11+ are only reachable via pipes)
     if (Util::Input::IsKeyPressed(Util::Keycode::NUM_0)) LoadLevel(0);
@@ -727,6 +740,51 @@ void App::TriggerLevelTransition() {
     m_LevelTransitionTimer = 2.0f;
 }
 
+// Debug cheats, edge-triggered so each press fires once. Called from Update only
+// during normal gameplay (after the game-over / transition / cutscene / transform
+// early-returns), so they can't fire mid-cutscene.
+void App::HandleCheats() {
+    auto& state = GameStateManager::GetInstance();
+
+    // G — toggle god mode (immune to enemy contact and pit falls).
+    if (Util::Input::IsKeyDown(Util::Keycode::G)) {
+        m_Mario->ToggleGodMode();
+        LOG_INFO("[CHEAT] God mode {}", m_Mario->IsGodMode() ? "ON" : "OFF");
+    }
+
+    // V — cycle power: Small -> Big -> Fire -> Small. Uses the normal power-up
+    // path (triggerPause=true) so Mario's feet stay planted across the resize.
+    // Skipped while control is locked (a pole/pipe sequence owns his state then).
+    if (Util::Input::IsKeyDown(Util::Keycode::V) && !m_Mario->IsControlLocked()) {
+        MarioState* s = m_Mario->GetState();
+        if (dynamic_cast<SmallMarioState*>(s))
+            m_Mario->ChangeState(std::make_unique<BigMarioState>());
+        else if (dynamic_cast<BigMarioState*>(s))
+            m_Mario->ChangeState(std::make_unique<FireMarioState>());
+        else
+            m_Mario->ChangeState(std::make_unique<SmallMarioState>());
+        LOG_INFO("[CHEAT] Cycled power state");
+    }
+
+    // I — 10 seconds of star power.
+    if (Util::Input::IsKeyDown(Util::Keycode::I)) {
+        m_Mario->ActivateStarPower(10.0f);
+        LOG_INFO("[CHEAT] Star power granted");
+    }
+
+    // T — top up the clock (+50s, capped).
+    if (Util::Input::IsKeyDown(Util::Keycode::T)) {
+        state.AddTime(50);
+        LOG_INFO("[CHEAT] +50 time");
+    }
+
+    // N — extra life.
+    if (Util::Input::IsKeyDown(Util::Keycode::N)) {
+        state.AddLife(1);
+        LOG_INFO("[CHEAT] +1 life");
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Level-2 intro cutscene
 //
@@ -771,15 +829,11 @@ void App::UpdateCutscene(float deltaTime) {
         if (auto pipe = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
             if (pipe->IsDownReached()) {
                 // Pipe entry done — reposition to the castle side and start walking.
-                bool isBig = m_Mario->GetSize().y > 16.0f;
                 const float walkStartX = -252.0f;  // column 4  (1-based)
                 m_CutsceneWalkEndX     = -108.0f;  // column 13 (1-based)
                 const float standY     = -184.0f;  // floor top (-192) + 8
 
-                m_Mario->ChangeState(isBig
-                    ? std::unique_ptr<MarioState>(std::make_unique<BigMarioState>())
-                    : std::unique_ptr<MarioState>(std::make_unique<SmallMarioState>()),
-                    false);
+                m_Mario->ApplyPowerState();   // keep his power tier across the scene
                 m_Mario->SetZIndex(50);
                 m_Mario->SetVisible(true);
                 m_Mario->SetPosition({ walkStartX, standY });

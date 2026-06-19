@@ -30,6 +30,13 @@ void Mario::ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause)
     float oldHeight = m_State ? m_State->GetHitboxSize().y : 0.0f;
     float newHeight = newState ? newState->GetHitboxSize().y : 0.0f;
 
+    // Remember the underlying power tier whenever Mario enters a concrete gameplay
+    // state. Transitional states (pole/pipe/pipe-exit) leave it untouched, so it
+    // can be restored verbatim on the far side of a transition.
+    if      (dynamic_cast<FireMarioState*>(newState.get()))  m_PowerTier = PowerTier::Fire;
+    else if (dynamic_cast<BigMarioState*>(newState.get()))   m_PowerTier = PowerTier::Big;
+    else if (dynamic_cast<SmallMarioState*>(newState.get())) m_PowerTier = PowerTier::Small;
+
     m_State = std::move(newState);
 
     if (triggerPause) {
@@ -41,6 +48,15 @@ void Mario::ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause)
     }
     else {
         m_TransformTimer = 0.0f;
+    }
+}
+
+void Mario::ApplyPowerState() {
+    switch (m_PowerTier) {
+    case PowerTier::Fire:  ChangeState(std::make_unique<FireMarioState>(),  false); break;
+    case PowerTier::Big:   ChangeState(std::make_unique<BigMarioState>(),   false); break;
+    case PowerTier::Small:
+    default:               ChangeState(std::make_unique<SmallMarioState>(), false); break;
     }
 }
 
@@ -236,7 +252,7 @@ void Mario::Update(float deltaTime) {
 }
 
 void Mario::TakeDamage() {
-    if (IsInvincible() || IsControlLocked() || IsStarPowered()) return;
+    if (m_GodMode || IsInvincible() || IsControlLocked() || IsStarPowered()) return;
 
     if (dynamic_cast<SmallMarioState*>(m_State.get()) != nullptr) {
         Die();

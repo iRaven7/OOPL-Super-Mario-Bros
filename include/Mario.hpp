@@ -12,15 +12,27 @@ class Mario : public Character {
 public:
     enum class AnimState { IDLE, RUN, JUMP, SKID, CROUCH };
 
+    // Mario's power tier, retained independently of his live MarioState so it can
+    // be carried across level / pipe / pole transitions (which run him through
+    // transitional states that don't distinguish Fire from Big).
+    enum class PowerTier { Small, Big, Fire };
+
     Mario();
 
     void ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause = true);
+    [[nodiscard]] PowerTier GetPowerTier() const { return m_PowerTier; }
+    // Re-enter the concrete gameplay state matching the retained power tier.
+    void ApplyPowerState();
     MarioState* GetState() const { return m_State.get(); }
     [[nodiscard]] bool IsInvincible() const { return m_InvincibleTimer > 0.0f; }
     [[nodiscard]] bool IsStarPowered() const { return m_StarTimer > 0.0f; }
     void SetPoleWalkInvisible(bool v) { m_PoleWalkInvisible = v; }
     [[nodiscard]] bool IsPoleWalkInvisible() const { return m_PoleWalkInvisible; }
     void ActivateStarPower(float duration) { m_StarTimer = duration; }
+    // Cheat: god mode ignores all enemy/pit damage (see TakeDamage and App's
+    // pit-death check).
+    void ToggleGodMode() { m_GodMode = !m_GodMode; }
+    [[nodiscard]] bool IsGodMode() const { return m_GodMode; }
     [[nodiscard]] bool CanBreakBlocks() const override;
     [[nodiscard]] bool IsControlLocked() const;
 
@@ -61,6 +73,8 @@ private:
     float m_CrouchShift = 0.0f;
     float m_InvincibleTimer = 0.0f;
     float m_StarTimer = 0.0f;
+    bool  m_GodMode = false;
+    PowerTier m_PowerTier = PowerTier::Small;
     float m_TransformTimer = 0.0f;
     float m_DeathAnimTimer = 0.0f;
     float m_DeathVelocityY = 0.0f;
