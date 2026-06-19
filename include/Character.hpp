@@ -36,6 +36,10 @@ public:
     void SetGrounded(bool grounded) { m_IsGrounded = grounded; }
     void SetVelocity(glm::vec2 v) { m_Velocity = v; }
     virtual bool CanBreakBlocks() const { return false; }
+    // True if this character smashes destructible blocks on horizontal contact
+    // (a moving Koopa shell). Mario only breaks blocks from below, so he leaves
+    // this false and never breaks bricks by walking into them.
+    virtual bool CanBreakBlocksFromSide() const { return false; }
 
     void SetPosition(const glm::vec2& Position) {
         m_WorldPosition = Position;

@@ -4,6 +4,7 @@
 #include "Item.hpp"
 #include "Mario.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 #include "Util/Animation.hpp"
 
 class SuperFlower : public Item {
@@ -40,6 +41,7 @@ public:
             m_IsActive = false;
             m_Visible = false;
             GameStateManager::GetInstance().AddScore(1000);
+            SFXManager::GetInstance().Play(SFXManager::Sound::PowerUp);
             if (mario) mario->ActivateStarPower(5.0f);
         }
     }

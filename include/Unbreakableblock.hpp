@@ -2,14 +2,16 @@
 #define UNBREAKABLE_BLOCK_HPP
 
 #include "Block.hpp"
+#include "SFXManager.hpp"
 
 class UnbreakableBlock : public Block {
 public:
     explicit UnbreakableBlock(const std::string& imagePath) : Block(imagePath) {}
 
-    // ÂÐ¼g OnHit¡A¨Ï¨ä¤£²£¥Í¥ô¦óª«²z¤ÏõX»P¸I¼²¼Ð°O
+    // ï¿½Ð¼g OnHitï¿½Aï¿½Ï¨ä¤£ï¿½ï¿½ï¿½Í¥ï¿½ï¿½óª«²zï¿½ï¿½ï¿½Xï¿½Pï¿½Iï¿½ï¿½ï¿½Ð°O
     void OnHit(Character* hitter) override {
-        // ¨è·N¯dªÅ¡AªýÂ_¹w³]ªº m_JustHit = true
+        // No item interaction â€” just the solid "bump" feedback.
+        SFXManager::GetInstance().Play(SFXManager::Sound::Bump);
     }
 };
 

@@ -22,6 +22,8 @@ set(INCLUDE_FILES
     OneUp.hpp
     SuperStar.hpp
     MovingPlatform.hpp
+    SFXManager.hpp
+    BGMManager.hpp
 )
 
 set(TEST_FILES

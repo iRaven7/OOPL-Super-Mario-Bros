@@ -5,6 +5,7 @@
 #include "GameStateManager.hpp"
 #include "Mario.hpp"
 #include "MarioState.hpp"
+#include "SFXManager.hpp"
 #include "Util/Animation.hpp"
 
 class FireFlower : public Item {
@@ -41,6 +42,7 @@ public:
             m_IsActive = false;
             m_Visible = false;
             GameStateManager::GetInstance().AddScore(1000);
+            SFXManager::GetInstance().Play(SFXManager::Sound::PowerUp);
             if (mario && !dynamic_cast<FireMarioState*>(mario->GetState())) {
                 mario->ChangeState(std::make_unique<FireMarioState>());
             }

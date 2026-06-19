@@ -1,6 +1,8 @@
 #ifndef GAME_STATE_MANAGER_HPP
 #define GAME_STATE_MANAGER_HPP
 
+#include "SFXManager.hpp"
+
 class GameStateManager {
 public:
     static GameStateManager& GetInstance() {
@@ -18,7 +20,12 @@ public:
         }
     }
 
-    void AddLife(int count = 1) { m_Lives += count; }
+    void AddLife(int count = 1) {
+        m_Lives += count;
+        // Any life gained (1-Up item, 100-coin rollover, combo overflow) cues
+        // the 1-Up jingle; losing a life on death does not.
+        if (count > 0) SFXManager::GetInstance().Play(SFXManager::Sound::OneUp);
+    }
     int GetLives() const { return m_Lives; }
 
     // --- Stomp combo: consecutive mid-air stomps escalate; the combo resets the
@@ -54,6 +61,11 @@ public:
 
     void SetLevelComplete(bool complete) { m_LevelComplete = complete; }
     bool IsLevelComplete() const { return m_LevelComplete; }
+
+    // Restart the clock for a fresh attempt at a level. Unlike Reset() this leaves
+    // score/coins/lives intact — used on level transitions and on death-respawn,
+    // both of which start the player over on a full timer.
+    void ResetTime() { m_TimeRemaining = 400.0f; }
 
 
     void Reset() {

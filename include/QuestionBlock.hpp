@@ -11,6 +11,7 @@
 #include "SuperFlower.hpp"
 #include "Mario.hpp"
 #include "MarioState.hpp"
+#include "SFXManager.hpp"
 
 class QuestionBlock : public Block {
 public:
@@ -36,6 +37,12 @@ public:
         m_IsBouncing = true;
         m_BounceVelocity = 250.0f;
         GameStateManager::GetInstance().AddScore(100);   // item/coin block hit
+
+        // A coin block "dings"; any block that pops out an item plays the
+        // item-emerging cue.
+        SFXManager::GetInstance().Play(GetContentType() == ContentType::COIN
+            ? SFXManager::Sound::Coin
+            : SFXManager::Sound::PowerUpAppears);
 
         // Consume one item from the block's contents.
         m_ContentCount--;

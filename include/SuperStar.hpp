@@ -4,6 +4,7 @@
 #include "Item.hpp"
 #include "Mario.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 
 class SuperStar : public Item {
 public:
@@ -63,6 +64,7 @@ public:
         m_IsActive = false;
         m_Visible = false;
         GameStateManager::GetInstance().AddScore(1000);
+        SFXManager::GetInstance().Play(SFXManager::Sound::PowerUp);
         if (mario) mario->ActivateStarPower(10.0f);
     }
 

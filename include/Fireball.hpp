@@ -16,7 +16,7 @@ public:
         SetPosition(startPos);
         SetZIndex(45);
         m_Velocity.x = direction * 200.0f;
-        m_Velocity.y = -100.0f;
+        m_Velocity.y = -150.0f;
     }
 
     void Update(float deltaTime, const std::vector<std::shared_ptr<Block>>& blocks) {

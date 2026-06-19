@@ -59,6 +59,12 @@ glm::vec2 Character::UpdatePhysics(float deltaTime, float inputDirection, bool i
         if (!block->IsActive() || !block->IsCollidable() || !block->IsXCollidable()) continue;
 
         if (CheckAABB(currentPos, xHitboxSize, block->GetCollisionPosition(), block->GetSize())) {
+            // A moving shell smashes a destructible brick it slams into, then
+            // bounces back off it just like any other block (the stop below zeroes
+            // its x-velocity, and Koopa::UpdateAI reverses direction next frame).
+            if (CanBreakBlocksFromSide() && block->IsDestructible()) {
+                block->OnHit(this);
+            }
             if (m_Velocity.x > 0.0f) {
                 currentPos.x = block->GetCollisionPosition().x - (block->GetSize().x / 2.0f) - (mySize.x / 2.0f);
             }

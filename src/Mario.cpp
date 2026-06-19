@@ -1,6 +1,8 @@
 #include "Mario.hpp"
 #include "MarioState.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
+#include "BGMManager.hpp"
 #include "Util/Logger.hpp"
 #include "Constants.hpp"
 #include "Block.hpp"
@@ -17,9 +19,25 @@ bool Mario::IsControlLocked() const {
 }
 
 void Mario::ChangeState(std::unique_ptr<MarioState> newState, bool triggerPause) {
+    // A power-up / power-down (the only callers that pass triggerPause) swaps in a
+    // taller/shorter hitbox. The box is centred on m_WorldPosition, so a plain swap
+    // resizes Mario symmetrically and buries his feet ~8px into the floor when he
+    // grows. The next physics frame runs its X-axis pass BEFORE the Y-axis pass,
+    // mistakes that buried overlap with the floor tile for a *side* collision, and
+    // shoves Mario horizontally (left while moving right, right while moving left) —
+    // the "random" displacement seen on collecting a power-up. Keep his feet planted
+    // by shifting the centre by half the height change so only the top edge moves.
+    float oldHeight = m_State ? m_State->GetHitboxSize().y : 0.0f;
+    float newHeight = newState ? newState->GetHitboxSize().y : 0.0f;
+
     m_State = std::move(newState);
+
     if (triggerPause) {
         m_TransformTimer = 1.0f;
+        float deltaHeight = newHeight - oldHeight;
+        if (deltaHeight != 0.0f) {
+            SetPosition({ m_WorldPosition.x, m_WorldPosition.y + deltaHeight * 0.5f });
+        }
     }
     else {
         m_TransformTimer = 0.0f;
@@ -35,13 +53,22 @@ void Mario::SetCrouching(bool crouching) {
     if (m_IsCrouching == crouching) return;
     m_IsCrouching = crouching;
 
-    if (m_State && m_State->GetHitboxSize().y > 16.0f) {
-        if (m_IsCrouching) {
-            m_WorldPosition.y -= 8.0f;
-        }
-        else {
-            m_WorldPosition.y += 8.0f;
-        }
+    // A tall (big/fire) hitbox halves while crouched; shift the centre down so
+    // the feet stay planted instead of the box shrinking around its centre.
+    // Crucially, store the shift and reverse EXACTLY it on stand-up — never
+    // recompute from the live state. Recomputing broke when Mario changed size
+    // mid-crouch (e.g. powered up/down): the asymmetric correction teleported
+    // him to a wrong height, and the unsynced m_Transform left the sprite at a
+    // separate coordinate from the hitbox. Route through SetPosition so world
+    // position and transform stay in lockstep.
+    if (m_IsCrouching) {
+        float fullHeight = m_State ? m_State->GetHitboxSize().y : 0.0f;
+        m_CrouchShift = (fullHeight > 16.0f) ? fullHeight * 0.25f : 0.0f;
+        SetPosition({ m_WorldPosition.x, m_WorldPosition.y - m_CrouchShift });
+    }
+    else {
+        SetPosition({ m_WorldPosition.x, m_WorldPosition.y + m_CrouchShift });
+        m_CrouchShift = 0.0f;
     }
 }
 
@@ -139,9 +166,11 @@ void Mario::UpdateAnimation(float deltaTime, float inputDirection) {
     }
 
     if (newState == AnimState::CROUCH) {
-        // Crouch-slide: keep sliding (with retained facing) while there is still
-        // horizontal momentum, then settle into the static crouch pose.
-        if (m_IsGrounded && std::abs(m_Velocity.x) > 40.0f) {
+        // Small Mario has no crouch pose, so its momentum "crouch-slide" uses the
+        // dedicated slide sprite. Big/Fire Mario has a real crouch sprite and
+        // should show it even while sliding — not the flagpole-slide pose.
+        bool isBig = m_State->GetHitboxSize().y > 16.0f;
+        if (!isBig && m_IsGrounded && std::abs(m_Velocity.x) > 40.0f) {
             SetImage(m_State->GetSlideImage());
         }
         else {
@@ -213,6 +242,7 @@ void Mario::TakeDamage() {
         Die();
     }
     else {
+        SFXManager::GetInstance().Play(SFXManager::Sound::Pipe);
         ChangeState(std::make_unique<SmallMarioState>(), true);
         m_InvincibleTimer = 2.0f;
     }
@@ -232,6 +262,7 @@ void Mario::Shoot() {
         m_SpawnedFireballs.push_back(std::make_shared<Fireball>(spawnPos, facing));
 
         m_ShootCooldown = 0.3f;
+        SFXManager::GetInstance().Play(SFXManager::Sound::Fireball);
         LOG_INFO("Fireball fired!");
     }
 }
@@ -255,7 +286,7 @@ void Mario::UpdateDeathAnimation(float deltaTime) {
 
     if (!m_DeathBounceStarted) {
         m_DeathBounceStarted = true;
-        m_DeathVelocityY = 700.0f;
+        m_DeathVelocityY = 300.0f;   // smaller upward pop than the original 700
     }
 
     m_DeathVelocityY += PhysicsConstants::GRAVITY * deltaTime;
@@ -285,6 +316,13 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             return res;
         }
         else {
+            // The instant Mario starts walking off the pole, sound the
+            // course-clear fanfare (once). It also stops the level theme.
+            if (!poleState->IsClearAnnounced()) {
+                poleState->SetClearAnnounced();
+                BGMManager::GetInstance().PlayStageClear();
+            }
+
             // Walk right toward the castle. On reaching the level's end column,
             // stop, hide Mario (he "enters" the castle), and finish the level.
             // Visibility is restored when the next level loads.

@@ -4,6 +4,7 @@
 #include "Block.hpp"
 #include "Character.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 
 class BreakableBlock : public Block {
 public:
@@ -33,12 +34,14 @@ public:
             m_IsActive = false;
             SetVisible(false);
             GameStateManager::GetInstance().AddScore(50);   // brick broken
+            SFXManager::GetInstance().Play(SFXManager::Sound::BreakBlock);
         }
         else {
             if (!m_IsBouncing) {
                 m_IsBouncing = true;
                 m_BounceVelocity = 180.0f;
             }
+            SFXManager::GetInstance().Play(SFXManager::Sound::Bump);
         }
     }
 

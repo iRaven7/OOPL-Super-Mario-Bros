@@ -108,6 +108,13 @@ public:
         DealDamageToMario(hitter);
     }
 
+    // Piranha Plants are excluded from the bounce-and-fall death; they simply
+    // disappear (mirrors them retracting into the pipe).
+    void OnFireballHit() override {
+        m_IsActive = false;
+        m_Visible = false;
+    }
+
 private:
     // True when Mario is standing on / hovering just above this plant's pipe mouth,
     // so the plant must not pop up. m_WorldPosition.x is the true pipe center; Mario's

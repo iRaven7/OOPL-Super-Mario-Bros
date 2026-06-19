@@ -3,6 +3,7 @@
 
 #include "Item.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 
 class Coin : public Item {
 public:
@@ -35,6 +36,7 @@ public:
         m_Visible = false;
         GameStateManager::GetInstance().AddCoin(1);
         GameStateManager::GetInstance().AddScore(200);
+        SFXManager::GetInstance().Play(SFXManager::Sound::Coin);
     }
 
 private:

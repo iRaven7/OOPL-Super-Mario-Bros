@@ -7,6 +7,7 @@
 #include "Fireball.hpp"
 #include "Koopa.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 #include "Util/Logger.hpp"
 #include <cmath>
 #include <algorithm>
@@ -47,11 +48,11 @@ void CollisionManager::HandleItemCollection(Mario* mario, std::vector<std::share
 void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<Enemy>>& enemies) {
     for (size_t i = 0; i < enemies.size(); ++i) {
         auto& enemyA = enemies[i];
-        if (!enemyA->IsActive()) continue;
+        if (!enemyA->IsActive() || enemyA->IsDying()) continue;
 
         for (size_t j = i + 1; j < enemies.size(); ++j) {
             auto& enemyB = enemies[j];
-            if (!enemyB->IsActive()) continue;
+            if (!enemyB->IsActive() || enemyB->IsDying()) continue;
 
             if (CheckAABB(enemyA->GetPosition(), enemyA->GetSize(),
                 enemyB->GetPosition(), enemyB->GetSize())) {
@@ -65,11 +66,13 @@ void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<En
                 if (aIsMovingShell && !bIsMovingShell) {
                     enemyB->OnFireballHit();
                     koopaA->RegisterShellKill();
+                    SFXManager::GetInstance().Play(SFXManager::Sound::Kick);
                     LOG_INFO("Shell (A) killed enemy!");
                 }
                 else if (bIsMovingShell && !aIsMovingShell) {
                     enemyA->OnFireballHit();
                     koopaB->RegisterShellKill();
+                    SFXManager::GetInstance().Play(SFXManager::Sound::Kick);
                     LOG_INFO("Shell (B) killed enemy!");
                 }
                 else if (aIsMovingShell && bIsMovingShell) {
@@ -77,6 +80,7 @@ void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<En
                     enemyB->OnFireballHit();
                     koopaA->RegisterShellKill();
                     koopaB->RegisterShellKill();
+                    SFXManager::GetInstance().Play(SFXManager::Sound::Kick);
                     LOG_INFO("Two shells collided!");
                 }
                 else {
@@ -134,7 +138,7 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
     std::vector<Enemy*> sideHits;
 
     for (auto& enemy : enemies) {
-        if (!enemy->IsActive()) continue;
+        if (!enemy->IsActive() || enemy->IsDying()) continue;
 
         glm::vec2 enemyPos = enemy->GetPosition();
         glm::vec2 enemySize = enemy->GetSize();
@@ -142,8 +146,8 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
         if (!CheckAABB(marioPos, marioSize, enemyPos, enemySize)) continue;
 
         if (mario->IsStarPowered()) {
+            // Invincible Mario plows straight through enemies — no stomp bounce.
             enemy->OnFireballHit();
-            mario->SetVelocity({ mario->GetVelocity().x, 600.0f });
             GameStateManager::GetInstance().AddScore(100);
             continue;
         }
@@ -154,6 +158,12 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
         if (initialVelY < 0.0f && marioBottom >= enemyTop - 16.0f && canBeStomped) {
             enemy->OnStomped(mario);
             GameStateManager::GetInstance().RegisterStompCombo();
+            // Jumping on a resting shell kicks it rather than squashing it;
+            // KickShell sounds the kick itself, so only play the stomp cue for a
+            // genuine squash (anything that didn't just start a shell moving).
+            Koopa* k = dynamic_cast<Koopa*>(enemy.get());
+            if (!(k && k->GetState() == Koopa::State::ShellMoving))
+                SFXManager::GetInstance().Play(SFXManager::Sound::Stomp);
             stomped = true;
             highestStompTop = std::max(highestStompTop, enemyTop);
         }
@@ -183,7 +193,8 @@ void CollisionManager::HandleEnemyRebound(std::vector<std::shared_ptr<Enemy>>& e
             auto& e1 = enemies[i];
             auto& e2 = enemies[j];
 
-            if (!e1->IsActive() || !e2->IsActive()) continue;
+            if (!e1->IsActive() || !e2->IsActive() ||
+                e1->IsDying() || e2->IsDying()) continue;
 
             glm::vec2 p1 = e1->GetPosition();
             glm::vec2 p2 = e2->GetPosition();
@@ -214,12 +225,13 @@ void CollisionManager::HandleFireballEnemyCollisions(std::vector<std::shared_ptr
         if (!fireball->IsActive()) continue;
 
         for (auto& enemy : enemies) {
-            if (!enemy->IsActive()) continue;
+            if (!enemy->IsActive() || enemy->IsDying()) continue;
 
             if (CheckAABB(fireball->GetPosition(), fireball->GetSize(),
                 enemy->GetPosition(), enemy->GetSize())) {
                 enemy->OnFireballHit();
                 GameStateManager::GetInstance().AddScore(200);
+                SFXManager::GetInstance().Play(SFXManager::Sound::Kick);
                 fireball->SetActive(false);
                 break;
             }

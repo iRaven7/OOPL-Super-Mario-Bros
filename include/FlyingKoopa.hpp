@@ -74,7 +74,7 @@ public:
             // match the body's facing direction.
             float dir   = (m_Velocity.x > 0.0f) ? -1.0f : 1.0f;
             float wingX = GetPosition().x + 8.0f;
-            float wingY = GetPosition().y + 6.0f;
+            float wingY = GetPosition().y + 6.0f + 7.0f * 16.0f;   // wings raised 5 tiles
             m_Wing->m_Transform.translation = { (wingX - cameraX) * cameraZoom, wingY * cameraZoom };
             m_Wing->m_Transform.scale       = { cameraZoom * dir, cameraZoom };
         }

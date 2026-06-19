@@ -55,6 +55,10 @@ public:
 private:
     std::unique_ptr<MarioState> m_State;
     bool m_IsCrouching = false;
+    // Exact vertical shift applied when entering the current crouch, so standing
+    // up reverses precisely that amount regardless of any state change (power
+    // up/down) that happened mid-crouch.
+    float m_CrouchShift = 0.0f;
     float m_InvincibleTimer = 0.0f;
     float m_StarTimer = 0.0f;
     float m_TransformTimer = 0.0f;

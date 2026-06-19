@@ -4,6 +4,7 @@
 #include "Enemy.hpp"
 #include "Mario.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
 #include "Util/Logger.hpp"
 
 class Koopa : public Enemy {
@@ -148,6 +149,12 @@ public:
 
     State GetState() const { return m_State; }
 
+    // A spinning shell smashes destructible bricks it slams into. CanBreakBlocks
+    // satisfies BreakableBlock::OnHit's break check; CanBreakBlocksFromSide opens
+    // the horizontal-collision break path in Character::UpdatePhysics.
+    bool CanBreakBlocks() const override { return m_State == State::ShellMoving; }
+    bool CanBreakBlocksFromSide() const override { return m_State == State::ShellMoving; }
+
     // A moving shell killing a chain of enemies escalates: 1st = 500, then 800,
     // 1k, 2k, 4k, 5k, 8k, then a 1-Up for every kill after that. The chain resets
     // on each fresh kick (see KickShell).
@@ -165,6 +172,7 @@ private:
         m_AnimTimer = 0.0f;
         m_KickGraceTimer = m_KickGrace;
         m_ShellKillCombo = 0;   // fresh kick starts a new kill chain
+        SFXManager::GetInstance().Play(SFXManager::Sound::Kick);
 
         // Push the shell clear of Mario's hitbox in the kick direction so it can't
         // re-collide as a "moving shell" on the very next frame.

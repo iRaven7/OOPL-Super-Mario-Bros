@@ -5,6 +5,7 @@
 #include "GameStateManager.hpp"
 #include "Mario.hpp"      // �ɤW�o��
 #include "MarioState.hpp" // �ɤW�o��
+#include "SFXManager.hpp"
 
 class Mushroom : public Item {
 public:
@@ -63,6 +64,7 @@ public:
         m_IsActive = false;
         m_Visible = false;
         GameStateManager::GetInstance().AddScore(1000);
+        SFXManager::GetInstance().Play(SFXManager::Sound::PowerUp);
         if (dynamic_cast<SmallMarioState*>(mario->GetState())) {
             mario->ChangeState(std::make_unique<BigMarioState>());
         }

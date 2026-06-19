@@ -109,6 +109,11 @@ public:
     // level2_end col 31 = 180, level 3 col 170 = 2404.
     float GetStopX() const { return m_StopX; }
 
+    // One-shot latch so the stage-clear fanfare fires exactly once, at the
+    // moment Mario starts walking off the pole.
+    bool IsClearAnnounced() const { return m_ClearAnnounced; }
+    void SetClearAnnounced() { m_ClearAnnounced = true; }
+
 private:
     float m_PoleX;
     bool m_IsBig;
@@ -119,6 +124,7 @@ private:
     float m_PauseTimer = 0.8f;
     bool m_PauseCompleted = false;
     float m_StopX = 3188.0f;
+    bool m_ClearAnnounced = false;
 };
 
 class PipeSlideState : public MarioState {

@@ -5,6 +5,8 @@
 #include "Mario.hpp"
 #include "MarioState.hpp"
 #include "GameStateManager.hpp"
+#include "SFXManager.hpp"
+#include "BGMManager.hpp"
 #include <algorithm>
 
 class Flag : public Item {
@@ -32,6 +34,10 @@ public:
             bool isBig  = mario->GetSize().y > 16.0f;
             bool isFire = dynamic_cast<FireMarioState*>(mario->GetState()) != nullptr;
             mario->ChangeState(std::make_unique<PoleSlideState>(m_PoleX, isBig, isFire, m_StopX), false);
+            // Reaching the flag ends the stage: cut the level theme now; the
+            // course-clear fanfare follows once Mario steps off the pole.
+            BGMManager::GetInstance().Stop();
+            SFXManager::GetInstance().Play(SFXManager::Sound::Flagpole);
 
             // Flagpole score scales with grab height: 5000 for the apex (top
             // tile), otherwise linear from 100 at the base up to 2000 just below
