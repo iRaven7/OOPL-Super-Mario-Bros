@@ -118,31 +118,20 @@ World 1-3 (空中平台關卡)
 
 ### 遊戲畫面
 
-#### 遊玩畫面
+> 下表為各主要畫面，請將實機截圖放入 `2026OOPL_Final_imgs/` 資料夾後對應顯示。
 
-| 畫面 | 截圖 |
+| 階段 | 遊戲畫面 |
 |:---:|:---:|
-| 小馬力歐（World 1-1 起點） | <img src="Resources/pics/little_mario_in_game.png" width="420"> |
-| 大馬力歐（吃蘑菇變身，可撞破磚塊） | <img src="Resources/pics/big_mario_in_game.png" width="420"> |
-| 火花馬力歐（可發射火球） | <img src="Resources/pics/fire_mario_in_game.png" width="420"> |
-| 踩踏敵人（Stomp） | <img src="Resources/pics/step_on_enemy_in_game.png" width="420"> |
-| World 1-2（地下關卡） | <img src="Resources/pics/level2_in_game.png" width="420"> |
-| World 1-3（空中平台關卡） | <img src="Resources/pics/level3_in_game.png" width="420"> |
-| 水管子關卡（隱藏地下金幣房） | <img src="Resources/pics/sub_level_in_game.png" width="420"> |
-
-#### 關卡完整地圖
-
-**World 1-1（地面關卡）**
-
-<img src="Resources/pics/SuperMarioBrosMap1-1.png" width="100%">
-
-**World 1-2（地下關卡）**
-
-<img src="Resources/pics/SuperMarioBrosMap1-2.png" width="100%">
-
-**World 1-3（空中平台關卡）**
-
-<img src="Resources/pics/SuperMarioBrosMap1-3.png" width="100%">
+| 關卡 1-1（地面世界） | <img src="2026OOPL_Final_imgs/1-1_gameplay.png"> |
+| 關卡 1-2（地下世界） | <img src="2026OOPL_Final_imgs/1-2_gameplay.png"> |
+| 關卡 1-3（空中平台） | <img src="2026OOPL_Final_imgs/1-3_gameplay.png"> |
+| 水管子關卡（隱藏金幣房） | <img src="2026OOPL_Final_imgs/pipe_room.png"> |
+| 主角變身（大馬力歐） | <img src="2026OOPL_Final_imgs/mario_powerup.png"> |
+| 主角變身（火花馬力歐） | <img src="2026OOPL_Final_imgs/mario_fire.png"> |
+| 無敵星星 | <img src="2026OOPL_Final_imgs/mario_star.png"> |
+| 踩踏敵人（Stomp） | <img src="2026OOPL_Final_imgs/stomp_enemy.png"> |
+| 拉旗桿（Flagpole） | <img src="2026OOPL_Final_imgs/flagpole.png"> |
+| 遊戲結束（Game Over） | <img src="2026OOPL_Final_imgs/game_over.png"> |
 
 ## 程式設計
 
