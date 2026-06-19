@@ -16,6 +16,9 @@ struct LevelPipeConfig {
     float subMapSpawnX = -300.0f;  // Mario spawn X inside that sub-map
     int   parentLevel  = -1;       // level returned to when exiting the 'w' pipe
     float returnSpawnX = -300.0f;  // Mario spawn X in the parent level on exit
+    // world-X where the end-of-level pole walk stops and Mario hides into the
+    // castle (defaults to level 1's column 219).
+    float flagStopX    = 3188.0f;
 };
 
 class MapManager {

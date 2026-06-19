@@ -11,8 +11,8 @@ namespace PhysicsConstants {
     constexpr float SPRINT_ACCEL = 320.0f;// do not change this
     constexpr float MAX_WALK_SPEED = 100.0f;// do not change this
     constexpr float MAX_SPRINT_SPEED = 150.0f;// do not change this
-    constexpr float FRICTION = 500.0f;// do not change this
-    constexpr float SKID_DECEL = 600.0f;// do not change this
+    constexpr float FRICTION = 300.0f;// do not change this
+    constexpr float SKID_DECEL = 200.0f;// do not change this
 }
 
 #endif // CONSTANTS_HPP

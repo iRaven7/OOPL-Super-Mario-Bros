@@ -26,7 +26,11 @@ public:
     void Start();
     void Update();
     void End();
-    void LoadLevel(int level, float spawnX = -300.0f, bool fromPipe = false);
+    // spawnY == kAutoSpawnY (the default) snaps Mario to the ground at spawnX;
+    // pass an explicit world Y to place him exactly there instead.
+    static constexpr float kAutoSpawnY = -1.0e9f;
+    void LoadLevel(int level, float spawnX = -300.0f, bool fromPipe = false,
+                   float spawnY = kAutoSpawnY);
 
     float GetCameraZoom() const { return m_CameraZoom; }
     void SetCameraZoom(float zoom) { m_CameraZoom = std::max(0.1f, zoom); }

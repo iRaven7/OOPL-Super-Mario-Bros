@@ -48,7 +48,7 @@ public:
         m_IsSquashed  = true;
         m_SquashTimer = 0.4f;
         SetImage(RESOURCE_DIR"/Entities/Goomba/goomba_step_on.png");
-        GameStateManager::GetInstance().AddScore(100);
+        // Score is awarded by the stomp-combo logic in CollisionManager.
         LOG_INFO("Goomba stomped!");
     }
 

@@ -16,6 +16,49 @@
 static constexpr float kHalfW = WINDOW_WIDTH / 2.0f;
 static constexpr float kHalfH = WINDOW_HEIGHT / 2.0f;
 
+namespace {
+// level2_end is a continuation segment, not a numbered main level — give it an
+// id outside the 0-9 selector / sub-map (11,12) / cutscene (20) ranges so the
+// number keys and level progression still map to the real levels. Its flagpole
+// leads on to level 3.
+constexpr int kLevel2End = 21;
+
+// --- Pipe transport table -------------------------------------------------
+// Mario enters a pipe by pressing the matching button while standing at a
+// registered location. Coordinates are derived from the map grid (1-based Col,
+// 0-based Row) the same way MapManager lays tiles out:
+//     worldX = -300 + (Col-1) * 16      worldY = 200 - Row * 16
+// Vertical (Down) pipes are 2 tiles wide; their trigger/spawn X carries the
+// +8 centre offset ("shift right by 8f") so Mario lines up with the mouth.
+struct PipeWarp {
+    enum class Entry { Down, Right, Left };
+    int       fromLevel;   // active only while this level is loaded
+    glm::vec2 trigger;     // world position Mario triggers from
+    Entry     entry;       // button + slide direction
+    int       toLevel;     // destination level id
+    float     spawnX;      // destination spawn X (world)
+    bool      riseOut;     // emerge with a vertical PipeExitState rise
+    bool      exactSpawnY; // pin spawnY exactly (skip ground-snap)
+    float     spawnY;      // destination spawn Y (world), used when exactSpawnY
+};
+
+// Spec (Col, Row). Destinations marked "@ Col,Row" pin the landing exactly via
+// spawnY = 200 - Row*16 + 16 (Mario standing on the row's pipe top), because the
+// landing pipe has solid blocks stacked above it that ground-snap would catch.
+//   L1 (64,21)  -> Pipe1 (vertical)
+//   Pipe1 (14,19) -> L1   (horizontal)
+//   L2 (104,22) -> Pipe2 (vertical)
+//   Pipe2 (13,19) -> L2 @ (116,23) (horizontal)   -> spawnY = 200-23*16+16 = -152
+//   L2 (168,22) -> level2_end @ (4,23) (horizontal) -> spawnY = -152
+const PipeWarp kPipeWarps[] = {
+    { 1,  { 716.0f,  -136.0f }, PipeWarp::Entry::Down,  11, -284.0f, false, false, 0.0f    },
+    { 11, { -92.0f,  -104.0f }, PipeWarp::Entry::Right,  1, 2412.0f, true,  false, 0.0f    },
+    { 2,  { 1356.0f, -152.0f }, PipeWarp::Entry::Down,  12, -284.0f, false, false, 0.0f    },
+    { 12, { -108.0f, -104.0f }, PipeWarp::Entry::Right,  2, 1548.0f, true,  true,  -152.0f },
+    { 2,  { 2372.0f, -152.0f }, PipeWarp::Entry::Right,  kLevel2End, -244.0f, true, true, -152.0f },
+};
+} // namespace
+
 void App::Start() {
     LOG_TRACE("Start");
 
@@ -64,7 +107,7 @@ void App::Start() {
     LoadLevel(0);
 }
 
-void App::LoadLevel(int level, float spawnX, bool fromPipe) {
+void App::LoadLevel(int level, float spawnX, bool fromPipe, float spawnY) {
     m_CurrentLevel = level;
 
     for (auto& block : m_CurrentMapBlocks) { m_Root.RemoveChild(block); }
@@ -147,7 +190,18 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
             cfg.mapPath = RESOURCE_DIR"/Map/level2_animation.txt";
             break;
 
-        // Add case 3, case 13 … here for future levels
+        case kLevel2End:   // level2_end — surface ending reached via level 2's far pipe
+            cfg.mapPath          = RESOURCE_DIR"/Map/level2_end.txt";
+            cfg.pipes.flagStopX  = 180.0f;   // end walk stops/hides at col 31
+            break;
+
+        case 3:   // World 1-3
+            cfg.mapPath          = RESOURCE_DIR"/Map/level3.txt";
+            cfg.defaultSpawnX    = -252.0f;  // spawn at col 4
+            cfg.pipes.flagStopX  = 2404.0f;  // end walk stops/hides at col 170
+            break;
+
+        // Add case 13 … here for future levels
         default:
             cfg.mapPath = RESOURCE_DIR"/Map/level" + std::to_string(level) + ".txt";
             break;
@@ -172,18 +226,23 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
     // Apply level-specific default spawn X when the caller used the generic default.
     if (spawnX == -300.0f) spawnX = cfg.defaultSpawnX;
 
-    // Find the highest collidable floor surface at spawnX and land Mario on it.
-    float groundTop = -10000.0f;
-    for (const auto& block : m_CurrentMapBlocks) {
-        if (!block->IsActive() || !block->IsCollidable()) continue;
-        auto bPos  = block->GetCollisionPosition();
-        auto bSize = block->GetSize();
-        if (std::abs(bPos.x - spawnX) < bSize.x) {
-            float top = bPos.y + bSize.y * 0.5f;
-            if (top > groundTop) groundTop = top;
+    // Resolve the landing height. By default, find the highest collidable floor
+    // surface at spawnX and land Mario on it; an explicit spawnY overrides this
+    // (pipe exits whose landing pipe has solid blocks stacked overhead, which
+    // ground-snap would wrongly latch onto).
+    if (spawnY == kAutoSpawnY) {
+        float groundTop = -10000.0f;
+        for (const auto& block : m_CurrentMapBlocks) {
+            if (!block->IsActive() || !block->IsCollidable()) continue;
+            auto bPos  = block->GetCollisionPosition();
+            auto bSize = block->GetSize();
+            if (std::abs(bPos.x - spawnX) < bSize.x) {
+                float top = bPos.y + bSize.y * 0.5f;
+                if (top > groundTop) groundTop = top;
+            }
         }
+        spawnY = (groundTop > -9999.0f) ? (groundTop + 8.0f) : 1500.0f;
     }
-    float spawnY = (groundTop > -9999.0f) ? (groundTop + 8.0f) : 1500.0f;
 
     // At this zoom the view is only ~16x9 tiles, so frame the camera on the spawn
     // point: Mario's spawn height sits in the lower third, and he starts in the
@@ -195,6 +254,9 @@ void App::LoadLevel(int level, float spawnX, bool fromPipe) {
         m_CameraX = spawnX + viewHalfW * 0.5f;
         m_CameraY = spawnY + viewHalfH * 0.45f;
     }
+
+    // Raise the viewport by one tile (positive cameraY shifts the view up).
+    m_CameraY += 16.0f;
 
     m_Mario->SetVelocity({ 0.0f, 0.0f });
     m_Mario->SetZIndex(50);
@@ -308,6 +370,10 @@ void App::Update() {
                     LoadLevel(m_CurrentLevel);
                 }
             }
+            else if (m_CurrentLevel == kLevel2End) {
+                // level2_end's flagpole leads on to the real level 3.
+                LoadLevel(3);
+            }
             else {
                 // NOTE: the level-2 intro cutscene (level 20 / StartLevel2Cutscene)
                 // is on hold — clearing 1-1 loads the real level 2 directly.
@@ -335,6 +401,7 @@ void App::Update() {
     }
 
     if (stateManager.IsLevelComplete()) {
+        stateManager.ApplyTimeBonus();   // 50 pts per remaining second
         TriggerLevelTransition();
         stateManager.SetLevelComplete(false);
         return;
@@ -356,73 +423,76 @@ void App::Update() {
     bool wantsCrouch = Util::Input::IsKeyPressed(Util::Keycode::DOWN);
     bool wantsFire = Util::Input::IsKeyDown(Util::Keycode::X);
 
+    // Resolve crouch state BEFORE animation/physics so both act on it this same
+    // frame. Doing it afterwards lagged the crouch by a frame: on a fast run the
+    // slide pose showed late, and on a slow run friction dragged velocity under
+    // the slide threshold during the lagged frame, skipping the slide entirely.
+    //
+    // Sticky crouch: can't stand while a solid block is directly overhead, or
+    // Mario would clip into it.
+    if (m_Mario->IsCrouching() && !wantsCrouch && !m_Mario->CanStandUp(m_CurrentMapBlocks)) {
+        wantsCrouch = true;
+    }
+    m_Mario->SetCrouching(wantsCrouch);
+
+    // While crouched on the ground Mario can't actively steer; whatever
+    // horizontal momentum he carried in bleeds off through friction — that decay
+    // is the crouch-slide.
     if (m_Mario->IsCrouching() && m_Mario->IsGrounded()) {
         inputDirection = 0.0f;
     }
 
-    // Pipe entrance — direction-aware
+    // Pipe entrance — coordinate-driven. Enter a pipe by pressing the matching
+    // button while standing at a registered warp location (see kPipeWarps).
     if (!m_Mario->IsControlLocked()) {
-        auto marioPos  = m_Mario->GetPosition();
-        auto marioSize = m_Mario->GetSize();
-        bool isBig     = marioSize.y > 16.0f;
+        glm::vec2 marioPos  = m_Mario->GetPosition();
+        glm::vec2 marioSize = m_Mario->GetSize();
+        bool      isBig     = marioSize.y > 16.0f;
 
-        for (auto& block : m_CurrentMapBlocks) {
-            if (!block->IsPipeEntrance()) continue;
+        for (const auto& warp : kPipeWarps) {
+            if (warp.fromLevel != m_CurrentLevel) continue;
 
-            auto blockPos  = block->GetPosition();
-            auto entryDir  = block->GetPipeEntryDir();
-            int  target    = block->GetTargetLevel();
-            float spawnX   = block->GetSpawnX();
-
-            if (entryDir == Block::PipeEntryDir::Down) {
-                // Vertical pipe: Down key + grounded + feet near pipe-top face
-                if (!wantsCrouch || !m_Mario->IsGrounded()) continue;
-                float pipeCenterX = blockPos.x + 8.0f;   // pipe is 2 tiles wide
-                float pipeTopY    = blockPos.y + 8.0f;   // top face of entrance tile
-                // Tolerance < 12 keeps Mario's center well inside the 32px-wide pipe span
-                // (pipeCenterX ± 16). The old 20px window let him trigger while mostly over
-                // the neighbouring tile, then snapped him a full tile sideways to the center.
-                if (std::abs(marioPos.x - pipeCenterX) < 12.0f &&
-                    std::abs((marioPos.y - marioSize.y / 2.0f) - pipeTopY) < 8.0f) {
+            if (warp.entry == PipeWarp::Entry::Down) {
+                // Vertical pipe: stand on top (grounded), centred on the mouth,
+                // press Down. trigger.x already carries the +8 centre offset.
+                float pipeTopFace = warp.trigger.y + 8.0f;
+                bool  feetNearTop = std::abs((marioPos.y - marioSize.y / 2.0f) - pipeTopFace) < 12.0f;
+                if (wantsCrouch && m_Mario->IsGrounded() &&
+                    std::abs(marioPos.x - warp.trigger.x) < 12.0f && feetNearTop) {
+                    m_Mario->SetPosition({ warp.trigger.x, marioPos.y });
                     m_Mario->ChangeState(std::make_unique<PipeSlideState>(
                         isBig, PipeSlideState::SlideDir::Down,
-                        marioPos.y - 64.0f, target, spawnX), false);
-                    m_Mario->SetPosition({ pipeCenterX, marioPos.y });
+                        marioPos.y - 64.0f, warp.toLevel, warp.spawnX, warp.riseOut,
+                        warp.spawnY, warp.exactSpawnY), false);
                     break;
                 }
             }
-            else if (entryDir == Block::PipeEntryDir::Right) {
-                // Horizontal right pipe: Right input + Mario's right side near pipe left face
-                if (inputDirection <= 0.0f) continue;
-                float pipeLeftX  = blockPos.x - 8.0f;
-                if (std::abs((marioPos.x + marioSize.x / 2.0f) - pipeLeftX) < 12.0f &&
-                    std::abs(marioPos.y - blockPos.y) < marioSize.y / 2.0f + 8.0f) {
+            else {
+                // Horizontal pipe: stand at the mouth, press toward it.
+                float dir = (warp.entry == PipeWarp::Entry::Right) ? 1.0f : -1.0f;
+                bool  pressingInto = (dir > 0.0f) ? (inputDirection > 0.0f) : (inputDirection < 0.0f);
+                if (pressingInto &&
+                    std::abs(marioPos.x - warp.trigger.x) < 14.0f &&
+                    std::abs(marioPos.y - warp.trigger.y) < marioSize.y / 2.0f + 16.0f) {
+                    auto sdir = (dir > 0.0f) ? PipeSlideState::SlideDir::Right
+                                             : PipeSlideState::SlideDir::Left;
                     m_Mario->ChangeState(std::make_unique<PipeSlideState>(
-                        isBig, PipeSlideState::SlideDir::Right,
-                        marioPos.x + 64.0f, target, spawnX), false);
-                    break;
-                }
-            }
-            else if (entryDir == Block::PipeEntryDir::Left) {
-                // Horizontal left pipe: Left input + Mario's left side near pipe right face
-                if (inputDirection >= 0.0f) continue;
-                float pipeRightX = blockPos.x + 8.0f;
-                if (std::abs((marioPos.x - marioSize.x / 2.0f) - pipeRightX) < 12.0f &&
-                    std::abs(marioPos.y - blockPos.y) < marioSize.y / 2.0f + 8.0f) {
-                    m_Mario->ChangeState(std::make_unique<PipeSlideState>(
-                        isBig, PipeSlideState::SlideDir::Left,
-                        marioPos.x - 64.0f, target, spawnX), false);
+                        isBig, sdir, marioPos.x + dir * 64.0f,
+                        warp.toLevel, warp.spawnX, warp.riseOut,
+                        warp.spawnY, warp.exactSpawnY), false);
                     break;
                 }
             }
         }
     }
 
-    // Check if pipe slide has finished — returning from a sub-map (11+) to a main level triggers exit animation
+    // Pipe slide finished — load the destination. The warp's riseOut flag (carried
+    // by the slide state) decides whether Mario emerges with a vertical rise.
     if (auto pipeState = dynamic_cast<PipeSlideState*>(m_Mario->GetState())) {
         if (pipeState->IsDownReached()) {
-            bool isReturn = (m_CurrentLevel >= 10 && pipeState->GetTargetLevel() < 10);
-            LoadLevel(pipeState->GetTargetLevel(), pipeState->GetSpawnX(), isReturn);
+            float spawnY = pipeState->HasExactSpawnY() ? pipeState->GetSpawnY() : kAutoSpawnY;
+            LoadLevel(pipeState->GetTargetLevel(), pipeState->GetSpawnX(),
+                      pipeState->RisesOut(), spawnY);
         }
     }
 
@@ -441,13 +511,6 @@ void App::Update() {
     m_Mario->Update(deltaTime);
     m_Mario->UpdateAnimation(deltaTime, inputDirection);
     m_Mario->UpdatePhysics(deltaTime, inputDirection, isSprinting, wantsJump, m_CurrentMapBlocks, isJumpHeld);
-
-    // Block standing up while a solid block is directly overhead — Mario must
-    // stay crouched instead of clipping through it.
-    if (m_Mario->IsCrouching() && !wantsCrouch && !m_Mario->CanStandUp(m_CurrentMapBlocks)) {
-        wantsCrouch = true;
-    }
-    m_Mario->SetCrouching(wantsCrouch);
 
     if (wantsFire) m_Mario->Shoot();
 
@@ -577,7 +640,7 @@ void App::UpdateCamera() {
         obj->SetVisible(std::abs(t.x) <= kHalfW + marginX &&
                         std::abs(t.y) <= kHalfH + marginY);
     };
-    for (auto& block : m_CurrentMapBlocks) cull(block.get());
+    for (auto& block : m_CurrentMapBlocks) if (block->IsActive()) cull(block.get());
     for (auto& item : m_Items)            if (item->IsActive())  cull(item.get());
     for (auto& enemy : m_Enemies)         if (enemy->IsActive()) cull(enemy.get());
     for (auto& fb : m_Fireballs)          if (fb->IsActive())    cull(fb.get());

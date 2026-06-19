@@ -285,17 +285,19 @@ glm::vec2 Mario::UpdatePhysics(float deltaTime, float inputDirection, bool isSpr
             return res;
         }
         else {
-            auto res = Character::UpdatePhysics(deltaTime, 1.0f, false, false, blocks);
-            m_Velocity.x = poleState->GetWalkSpeed();
-
-            if (!m_PoleWalkInvisible && GetPosition().x >= poleState->GetInvisibleThresholdX()) {
+            // Walk right toward the castle. On reaching the level's end column,
+            // stop, hide Mario (he "enters" the castle), and finish the level.
+            // Visibility is restored when the next level loads.
+            if (GetPosition().x >= poleState->GetStopX()) {
                 m_PoleWalkInvisible = true;
                 m_Visible = false;
-            }
-
-            if (GetPosition().x > poleState->GetPoleX() + 300.0f) {
                 GameStateManager::GetInstance().SetLevelComplete(true);
+                auto res = Character::UpdatePhysics(deltaTime, 0.0f, false, false, blocks);
+                m_Velocity.x = 0.0f;
+                return res;
             }
+            auto res = Character::UpdatePhysics(deltaTime, 1.0f, false, false, blocks);
+            m_Velocity.x = poleState->GetWalkSpeed();
             return res;
         }
     }

@@ -5,12 +5,14 @@
 #include "Mario.hpp"
 #include "MarioState.hpp"
 #include "GameStateManager.hpp"
+#include <algorithm>
 
 class Flag : public Item {
 public:
-    Flag(glm::vec2 bottomPos) : Item(RESOURCE_DIR"/Blocks/flag.png") {
+    Flag(glm::vec2 bottomPos, float stopX = 3188.0f) : Item(RESOURCE_DIR"/Blocks/flag.png") {
         m_PoleX = bottomPos.x;
         m_BottomY = bottomPos.y;
+        m_StopX = stopX;
         m_FlagY = bottomPos.y + 9 * 16.0f; // 9-segment pole, top at +144
 
         SetPosition({ m_PoleX - 16.0f, m_FlagY});
@@ -29,8 +31,22 @@ public:
             m_IsTriggered = true;
             bool isBig  = mario->GetSize().y > 16.0f;
             bool isFire = dynamic_cast<FireMarioState*>(mario->GetState()) != nullptr;
-            mario->ChangeState(std::make_unique<PoleSlideState>(m_PoleX, isBig, isFire), false);
-            GameStateManager::GetInstance().AddScore(5000);
+            mario->ChangeState(std::make_unique<PoleSlideState>(m_PoleX, isBig, isFire, m_StopX), false);
+
+            // Flagpole score scales with grab height: 5000 for the apex (top
+            // tile), otherwise linear from 100 at the base up to 2000 just below
+            // the apex.
+            float poleTop = m_BottomY + 9 * 16.0f;
+            float apexY   = poleTop - 16.0f;
+            float grabY   = std::clamp(mario->GetPosition().y, m_BottomY, poleTop);
+            int score;
+            if (grabY >= apexY) {
+                score = 5000;
+            } else {
+                float frac = (grabY - m_BottomY) / (apexY - m_BottomY);
+                score = std::max(100, static_cast<int>(frac * 2000.0f));
+            }
+            GameStateManager::GetInstance().AddScore(score);
         }
     }
 
@@ -57,6 +73,7 @@ private:
     float m_PoleX;
     float m_BottomY;
     float m_FlagY;
+    float m_StopX = 3188.0f;
 };
 
 #endif // FLAG_HPP

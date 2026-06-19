@@ -35,6 +35,7 @@ public:
 
         m_IsBouncing = true;
         m_BounceVelocity = 250.0f;
+        GameStateManager::GetInstance().AddScore(100);   // item/coin block hit
 
         // Consume one item from the block's contents.
         m_ContentCount--;

@@ -73,8 +73,8 @@ public:
 
 class PoleSlideState : public MarioState {
 public:
-    PoleSlideState(float poleX, bool isBig, bool isFire = false)
-        : m_PoleX(poleX), m_IsBig(isBig), m_IsFire(isFire) {}
+    PoleSlideState(float poleX, bool isBig, bool isFire = false, float stopX = 3188.0f)
+        : m_PoleX(poleX), m_IsBig(isBig), m_IsFire(isFire), m_StopX(stopX) {}
 
     float GetPoleX() const { return m_PoleX; }
     glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 31.0f } : glm::vec2{ 16.0f, 15.0f }; }
@@ -104,9 +104,10 @@ public:
         m_PauseTimer -= dt;
         if (m_PauseTimer <= 0.0f) m_PauseCompleted = true;
     }
-    // world-X at which Mario turns invisible while walking right after the pole
-    // column 219 (1-based) = startX(-300) + 218 * BLOCK_SIZE(16)
-    float GetInvisibleThresholdX() const { return m_InvisibleThresholdX; }
+    // world-X at which Mario stops walking, hides (he "enters" the castle), and
+    // the level is marked complete. Per-level: e.g. level 1 col 219 = 3188,
+    // level2_end col 31 = 180, level 3 col 170 = 2404.
+    float GetStopX() const { return m_StopX; }
 
 private:
     float m_PoleX;
@@ -117,7 +118,7 @@ private:
     bool m_IsBottomReached = false;
     float m_PauseTimer = 0.8f;
     bool m_PauseCompleted = false;
-    float m_InvisibleThresholdX = 3188.0f;
+    float m_StopX = 3188.0f;
 };
 
 class PipeSlideState : public MarioState {
@@ -129,10 +130,18 @@ public:
         : m_IsBig(isBig), m_SlideDir(SlideDir::Down), m_Target(targetY)
         , m_TargetLevel(targetLevel), m_SpawnX(spawnX) {}
 
-    // Directional pipe — explicit direction + target on that axis
-    PipeSlideState(bool isBig, SlideDir dir, float target, int targetLevel, float spawnX = -300.0f)
+    // Directional pipe — explicit direction + target on that axis.
+    // riseOut: when true, Mario emerges at the destination with a PipeExitState
+    // rise (used when the destination spawn sits on top of a vertical pipe);
+    // when false he simply spawns standing.
+    // hasSpawnY: when true, spawnY pins the destination landing height exactly
+    // (skipping ground-snap, which would otherwise latch onto blocks stacked
+    // above the landing pipe).
+    PipeSlideState(bool isBig, SlideDir dir, float target, int targetLevel, float spawnX = -300.0f, bool riseOut = false,
+                   float spawnY = 0.0f, bool hasSpawnY = false)
         : m_IsBig(isBig), m_SlideDir(dir), m_Target(target)
-        , m_TargetLevel(targetLevel), m_SpawnX(spawnX) {}
+        , m_TargetLevel(targetLevel), m_SpawnX(spawnX), m_RiseOut(riseOut)
+        , m_SpawnY(spawnY), m_HasSpawnY(hasSpawnY) {}
 
     glm::vec2 GetHitboxSize() const override { return m_IsBig ? glm::vec2{ 16.0f, 31.0f } : glm::vec2{ 16.0f, 15.0f }; }
     bool CanBreakBlocks() const override { return false; }
@@ -153,6 +162,9 @@ public:
     void SetDownReached(bool val) { m_IsDownReached = val; }
     int GetTargetLevel() const { return m_TargetLevel; }
     float GetSpawnX() const { return m_SpawnX; }
+    bool RisesOut() const { return m_RiseOut; }
+    float GetSpawnY() const { return m_SpawnY; }
+    bool HasExactSpawnY() const { return m_HasSpawnY; }
 
 private:
     bool     m_IsBig;
@@ -160,6 +172,9 @@ private:
     float    m_Target;
     int      m_TargetLevel;
     float m_SpawnX;
+    bool m_RiseOut = false;
+    float m_SpawnY = 0.0f;
+    bool m_HasSpawnY = false;
     bool m_IsDownReached = false;
 };
 

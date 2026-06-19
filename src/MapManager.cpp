@@ -58,7 +58,15 @@ void MapManager::LoadMap(const std::string& filePath,
                 // --- floor / terrain ---
             case '1': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/floor.png")); break;
             case '2': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/building.png")); break;
-            case '9': addBlock(std::make_shared<Block>(RESOURCE_DIR"/Blocks/castle.png")); break;
+            case '9': {
+                // Castle sits below Mario (ZIndex 50) so he renders in front of
+                // it during the end-of-level walk instead of vanishing behind it.
+                auto castle = std::make_shared<Block>(RESOURCE_DIR"/Blocks/castle.png");
+                castle->SetPosition(pos);
+                castle->SetZIndex(45);
+                outBlocks.push_back(castle);
+                break;
+            }
             case '3': addBlock(std::make_shared<BreakableBlock>(RESOURCE_DIR"/Blocks/breakable_block.png")); break;
 
                 // blue variants
@@ -174,7 +182,7 @@ void MapManager::LoadMap(const std::string& filePath,
                 auto top = std::make_shared<BackgroundProp>(RESOURCE_DIR"/Blocks/flag_top.png");
                 top->SetPosition({ pos.x, pos.y + 9 * 16.0f });
                 outBlocks.push_back(top);
-                auto flag = std::make_shared<Flag>(pos);
+                auto flag = std::make_shared<Flag>(pos, pipeConfig.flagStopX);
                 outItems.push_back(flag);
                 break;
             }

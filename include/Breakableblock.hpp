@@ -3,6 +3,7 @@
 
 #include "Block.hpp"
 #include "Character.hpp"
+#include "GameStateManager.hpp"
 
 class BreakableBlock : public Block {
 public:
@@ -31,6 +32,7 @@ public:
         if (IsDestructible() && hitter->CanBreakBlocks()) {
             m_IsActive = false;
             SetVisible(false);
+            GameStateManager::GetInstance().AddScore(50);   // brick broken
         }
         else {
             if (!m_IsBouncing) {

@@ -64,18 +64,19 @@ void CollisionManager::HandleEnemyEnemyCollisions(std::vector<std::shared_ptr<En
 
                 if (aIsMovingShell && !bIsMovingShell) {
                     enemyB->OnFireballHit();
-                    GameStateManager::GetInstance().AddScore(100);
+                    koopaA->RegisterShellKill();
                     LOG_INFO("Shell (A) killed enemy!");
                 }
                 else if (bIsMovingShell && !aIsMovingShell) {
                     enemyA->OnFireballHit();
-                    GameStateManager::GetInstance().AddScore(100);
+                    koopaB->RegisterShellKill();
                     LOG_INFO("Shell (B) killed enemy!");
                 }
                 else if (aIsMovingShell && bIsMovingShell) {
                     enemyA->OnFireballHit();
                     enemyB->OnFireballHit();
-                    GameStateManager::GetInstance().AddScore(200);
+                    koopaA->RegisterShellKill();
+                    koopaB->RegisterShellKill();
                     LOG_INFO("Two shells collided!");
                 }
                 else {
@@ -124,6 +125,10 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
     float initialVelY = mario->GetVelocity().y;
     float marioBottom = marioPos.y - (marioSize.y / 2.0f);
 
+    // The stomp combo only counts consecutive mid-air stomps; touching the ground
+    // ends it.
+    if (mario->IsGrounded()) GameStateManager::GetInstance().ResetStompCombo();
+
     bool stomped = false;
     float highestStompTop = -1.0e9f;
     std::vector<Enemy*> sideHits;
@@ -148,6 +153,7 @@ void CollisionManager::HandleMarioEnemyCollisions(Mario* mario, std::vector<std:
 
         if (initialVelY < 0.0f && marioBottom >= enemyTop - 16.0f && canBeStomped) {
             enemy->OnStomped(mario);
+            GameStateManager::GetInstance().RegisterStompCombo();
             stomped = true;
             highestStompTop = std::max(highestStompTop, enemyTop);
         }
@@ -213,6 +219,7 @@ void CollisionManager::HandleFireballEnemyCollisions(std::vector<std::shared_ptr
             if (CheckAABB(fireball->GetPosition(), fireball->GetSize(),
                 enemy->GetPosition(), enemy->GetSize())) {
                 enemy->OnFireballHit();
+                GameStateManager::GetInstance().AddScore(200);
                 fireball->SetActive(false);
                 break;
             }
