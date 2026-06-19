@@ -28,7 +28,7 @@ title: 2026OOPL_Final.md
 
 ### 遊戲規則
 
-#### 🎮 操作方式
+#### 操作方式
 
 | 按鍵 | 功能 |
 |:---:|---|
@@ -41,7 +41,7 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### ⭐ 力量型態 (Power State)
+#### 馬力歐型態 (Mario State)
 
 | 圖示 | 型態 | 說明 |
 |:---:|:---:|---|
@@ -52,7 +52,7 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### 👾 敵人介紹
+#### 敵人介紹
 
 | 圖示 | 名稱 | 特性 |
 |:---:|:---:|---|
@@ -63,20 +63,19 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### 🎁 道具介紹
+#### 道具介紹
 
 | 圖示 | 名稱 | 效果 |
 |:---:|:---:|---|
 | <img src="Resources/Items/mushroom.png" width="28"> | **蘑菇 (Mushroom)** | 讓馬力歐變大，可以敲碎磚塊。 |
 | <img src="Resources/Items/fireflower1.png" width="28"> | **火花 (Fire Flower)** | 讓馬力歐變成火花型態，可以發射火球。 |
 | <img src="Resources/Items/super_star.png" width="28"> | **無敵星星 (Star)** | 短時間內無敵，碰到敵人直接撞飛。 |
-| <img src="Resources/Items/1up.png" width="28"> | **1-UP 蘑菇** | 吃了可以多一條命。 |
 | <img src="Resources/Items/coin.png" width="28"> | **金幣 (Coin)** | 吃金幣加分，集滿 100 個多加一條命。 |
 | <img src="Resources/Items/superflower1.png" width="28"> | **超級火花 (Super Flower)** | 特殊強化道具。 |
 
 ---
 
-#### 🗺️ 關卡流程
+#### 關卡流程
 
 ```
 World 1-1 (地面關卡)
@@ -92,7 +91,7 @@ World 1-3 (空中平台關卡)
 
 ---
 
-#### 🕹️ Debug / 作弊模式
+#### Debug / 作弊模式
 
 開發測試用的輔助按鍵：
 
@@ -107,7 +106,7 @@ World 1-3 (空中平台關卡)
 
 ---
 
-#### 💡 遊戲機制補充
+#### 遊戲機制補充
 
 | 機制 | 說明 |
 |---|---|
