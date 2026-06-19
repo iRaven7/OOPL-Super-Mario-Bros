@@ -28,7 +28,7 @@ title: 2026OOPL_Final.md
 
 ### 遊戲規則
 
-#### 🎮 操作方式
+#### 操作方式
 
 | 按鍵 | 功能 |
 |:---:|---|
@@ -41,7 +41,7 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### ⭐ 力量型態 (Power State)
+#### 馬力歐型態 (Mario State)
 
 | 圖示 | 型態 | 說明 |
 |:---:|:---:|---|
@@ -52,7 +52,7 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### 👾 敵人介紹
+#### 敵人介紹
 
 | 圖示 | 名稱 | 特性 |
 |:---:|:---:|---|
@@ -63,20 +63,19 @@ title: 2026OOPL_Final.md
 
 ---
 
-#### 🎁 道具介紹
+#### 道具介紹
 
 | 圖示 | 名稱 | 效果 |
 |:---:|:---:|---|
 | <img src="Resources/Items/mushroom.png" width="28"> | **蘑菇 (Mushroom)** | 讓馬力歐變大，可以敲碎磚塊。 |
 | <img src="Resources/Items/fireflower1.png" width="28"> | **火花 (Fire Flower)** | 讓馬力歐變成火花型態，可以發射火球。 |
 | <img src="Resources/Items/super_star.png" width="28"> | **無敵星星 (Star)** | 短時間內無敵，碰到敵人直接撞飛。 |
-| <img src="Resources/Items/1up.png" width="28"> | **1-UP 蘑菇** | 吃了可以多一條命。 |
 | <img src="Resources/Items/coin.png" width="28"> | **金幣 (Coin)** | 吃金幣加分，集滿 100 個多加一條命。 |
 | <img src="Resources/Items/superflower1.png" width="28"> | **超級火花 (Super Flower)** | 特殊強化道具。 |
 
 ---
 
-#### 🗺️ 關卡流程
+#### 關卡流程
 
 ```
 World 1-1 (地面關卡)
@@ -92,7 +91,7 @@ World 1-3 (空中平台關卡)
 
 ---
 
-#### 🕹️ Debug / 作弊模式
+#### Debug / 作弊模式
 
 開發測試用的輔助按鍵：
 
@@ -107,7 +106,7 @@ World 1-3 (空中平台關卡)
 
 ---
 
-#### 💡 遊戲機制補充
+#### 遊戲機制補充
 
 | 機制 | 說明 |
 |---|---|
@@ -119,20 +118,31 @@ World 1-3 (空中平台關卡)
 
 ### 遊戲畫面
 
-> 下表為各主要畫面，請將實機截圖放入 `2026OOPL_Final_imgs/` 資料夾後對應顯示。
+#### 遊玩畫面
 
-| 階段 | 遊戲畫面 |
+| 畫面 | 截圖 |
 |:---:|:---:|
-| 關卡 1-1（地面世界） | <img src="2026OOPL_Final_imgs/1-1_gameplay.png"> |
-| 關卡 1-2（地下世界） | <img src="2026OOPL_Final_imgs/1-2_gameplay.png"> |
-| 關卡 1-3（空中平台） | <img src="2026OOPL_Final_imgs/1-3_gameplay.png"> |
-| 水管子關卡（隱藏金幣房） | <img src="2026OOPL_Final_imgs/pipe_room.png"> |
-| 主角變身（大馬力歐） | <img src="2026OOPL_Final_imgs/mario_powerup.png"> |
-| 主角變身（火花馬力歐） | <img src="2026OOPL_Final_imgs/mario_fire.png"> |
-| 無敵星星 | <img src="2026OOPL_Final_imgs/mario_star.png"> |
-| 踩踏敵人（Stomp） | <img src="2026OOPL_Final_imgs/stomp_enemy.png"> |
-| 拉旗桿（Flagpole） | <img src="2026OOPL_Final_imgs/flagpole.png"> |
-| 遊戲結束（Game Over） | <img src="2026OOPL_Final_imgs/game_over.png"> |
+| 小馬力歐（World 1-1 起點） | <img src="Resources/pics/little_mario_in_game.png" width="420"> |
+| 大馬力歐（吃蘑菇變身，可撞破磚塊） | <img src="Resources/pics/big_mario_in_game.png" width="420"> |
+| 火花馬力歐（可發射火球） | <img src="Resources/pics/fire_mario_in_game.png" width="420"> |
+| 踩踏敵人（Stomp） | <img src="Resources/pics/step_on_enemy_in_game.png" width="420"> |
+| World 1-2（地下關卡） | <img src="Resources/pics/level2_in_game.png" width="420"> |
+| World 1-3（空中平台關卡） | <img src="Resources/pics/level3_in_game.png" width="420"> |
+| 水管子關卡（隱藏地下金幣房） | <img src="Resources/pics/sub_level_in_game.png" width="420"> |
+
+#### 關卡完整地圖
+
+**World 1-1（地面關卡）**
+
+<img src="Resources/pics/SuperMarioBrosMap1-1.png" width="100%">
+
+**World 1-2（地下關卡）**
+
+<img src="Resources/pics/SuperMarioBrosMap1-2.png" width="100%">
+
+**World 1-3（空中平台關卡）**
+
+<img src="Resources/pics/SuperMarioBrosMap1-3.png" width="100%">
 
 ## 程式設計
 
